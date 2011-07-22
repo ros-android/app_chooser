@@ -39,8 +39,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.ros.Node;
-import org.ros.ServiceResponseListener;
+import org.ros.node.Node;
+import org.ros.exception.RemoteException;
+import org.ros.node.service.ServiceResponseListener;
 import org.ros.message.app_manager.StatusCodes;
 import org.ros.service.app_manager.StartApp;
 import org.ros.service.app_manager.StopApp;
@@ -101,7 +102,7 @@ public class StubAppActivity extends RosAppActivity implements AppStartCallback,
       }
 
       @Override
-      public void onFailure(Exception e) {
+      public void onFailure(RemoteException e) {
         safeSetStatus("Failed: " + e.getMessage());
       }
     });
@@ -132,7 +133,7 @@ public class StubAppActivity extends RosAppActivity implements AppStartCallback,
       }
 
       @Override
-      public void onFailure(Exception e) {
+      public void onFailure(RemoteException e) {
         safeSetStatus("Failed: cannot contact robot!");
       }
     });

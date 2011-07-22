@@ -44,9 +44,9 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Button;
-import org.ros.MessageListener;
-import org.ros.Node;
-import org.ros.exception.RosInitException;
+import org.ros.message.MessageListener;
+import org.ros.node.Node;
+import org.ros.exception.RosException;
 import org.ros.message.app_manager.App;
 import org.ros.message.app_manager.AppList;
 import ros.android.activity.RosAppActivity;
@@ -54,8 +54,8 @@ import android.widget.LinearLayout;
 import ros.android.util.Dashboard;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-
-import org.ros.ServiceResponseListener;
+import org.ros.exception.RemoteException;
+import org.ros.node.service.ServiceResponseListener;
 import org.ros.message.app_manager.StatusCodes;
 import org.ros.service.app_manager.StopApp;
 
@@ -158,7 +158,7 @@ public class AppChooser extends RosAppActivity {
 
     try {
       dashboard.start(node);
-    } catch (RosInitException ex) {
+    } catch (RosException ex) {
       safeSetStatus("Failed: " + ex.getMessage());
     }
     
@@ -190,7 +190,7 @@ public class AppChooser extends RosAppActivity {
         }
 
       });
-    } catch (RosInitException e) {
+    } catch (RosException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
@@ -235,7 +235,7 @@ public class AppChooser extends RosAppActivity {
         }
       }
       @Override
-      public void onFailure(Exception e) {
+      public void onFailure(RemoteException e) {
         //safeSetStatus("Failed: cannot contact robot!");
       }
     });
