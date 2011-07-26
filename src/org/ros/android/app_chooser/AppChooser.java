@@ -58,6 +58,7 @@ import org.ros.exception.RemoteException;
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.message.app_manager.StatusCodes;
 import org.ros.service.app_manager.StopApp;
+import android.app.ProgressDialog;
 
 import java.util.ArrayList;
 
@@ -225,18 +226,43 @@ public class AppChooser extends RosAppActivity {
   }
 
   public void stopApplicationsClicked(View view) {
+    final AppChooser activity = this;
+    final ProgressDialog progress = ProgressDialog.show(activity,
+               "Stopping Applications", "Stopping all applications...", true, false);
+    progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
     appManager.stopApp("*", new ServiceResponseListener<StopApp.Response>() {
       @Override
       public void onSuccess(StopApp.Response message) {
-        if (message.stopped || message.error_code == StatusCodes.NOT_RUNNING) {
-          //safeSetStatus("Stopped.");
-        } else {
-          //safeSetStatus("ERROR: " + message.message);
+        if (!(message.stopped || message.error_code == StatusCodes.NOT_RUNNING)) {
+          final String errorMessage = message.message;
+          runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
+                  .setMessage("ERROR: " + errorMessage)
+                  .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                      public void onClick(DialogInterface dialog, int which) { }})
+                  .create().show();
+              }});
         }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              progress.dismiss();
+            }});
       }
       @Override
       public void onFailure(RemoteException e) {
-        //safeSetStatus("Failed: cannot contact robot!");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
+                .setMessage("Failed: cannot contact robot!")
+                .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) { }})
+                .create().show();
+              progress.dismiss();
+            }});
       }
     });
     
