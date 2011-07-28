@@ -42,6 +42,7 @@ import android.util.Log;
 import org.ros.message.app_manager.App;
 import org.ros.message.app_manager.ClientApp;
 import ros.android.activity.AppManager;
+import android.net.Uri;
 
 import java.util.ArrayList;
 
@@ -49,7 +50,7 @@ public class AppLauncher {
   static private final String CLIENT_TYPE = "android";
 
   /** Launch a client app for the given robot app. */
-  static public void launch(Activity parentActivity, App app) {
+  static public void launch(final Activity parentActivity, App app) {
     ArrayList<ClientAppData> android_apps = new ArrayList<ClientAppData>();
 
     if (app.client_apps.size() == 0) {
@@ -76,12 +77,31 @@ public class AppLauncher {
     // map of each app in android_apps.
     ArrayList<ClientAppData> appropriateAndroidApps = android_apps;
 
+
+    // TODO: support multiple android apps
+    if (appropriateAndroidApps.size() != 1) {
+      AlertDialog.Builder dialog = new AlertDialog.Builder(parentActivity);
+      dialog.setTitle("Wrong Number of Android Apps");
+      dialog.setMessage("There are " + appropriateAndroidApps.size() + " valid android apps, not 1 as there should be.");
+      dialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dlog, int i) {
+            dlog.dismiss();
+          }});
+      dialog.show();
+      return;
+    }
+
+    //TODO: this installs the last android app in the set.
+    String className = "";
+
     // Loop over all android apps, trying to launch one.
     for (int i = 0; i < appropriateAndroidApps.size(); i++) {
       ClientAppData appData = appropriateAndroidApps.get(i);
       Intent intent = appData.createIntent();
       intent.putExtra(AppManager.PACKAGE + ".robot_app_name", app.name);
       try {
+        className = intent.getAction();
         Log.i("RosAndroid", "trying to startActivity( action: " + intent.getAction() + " )");
         parentActivity.startActivity(intent);
         return;
@@ -89,6 +109,8 @@ public class AppLauncher {
         Log.i("RosAndroid", "activity not found for action: " + intent.getAction());
       }
     }
+
+    final String installPackage = className.substring(0, className.lastIndexOf("."));
 
     Log.i("RosAndroid", "showing not-installed dialog.");
 
@@ -98,13 +120,22 @@ public class AppLauncher {
     AlertDialog.Builder dialog = new AlertDialog.Builder(parentActivity);
     dialog.setTitle("Android app not installed.");
     dialog
-        .setMessage("This robot app requires a client user interface app, but none of the applicable android apps are installed.");
-    dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        .setMessage("This robot app requires a client user interface app, but none of the applicable android apps are installed. Would you like to install the app from the market place?");
+    dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dlog, int i) {
+        Uri uri = Uri.parse("market://search?q=pname:" + installPackage);
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        parentActivity.startActivity(intent);
+      }
+    });
+    dialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dlog, int i) {
         dlog.dismiss();
       }
     });
+    dialog.show();
   }
 
   /** Launch the "stub" app */
