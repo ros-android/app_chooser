@@ -57,6 +57,7 @@ import android.content.DialogInterface;
 import org.ros.exception.RemoteException;
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.message.app_manager.StatusCodes;
+import org.ros.service.app_manager.ListApps;
 import org.ros.service.app_manager.StopApp;
 import android.app.ProgressDialog;
 
@@ -172,6 +173,32 @@ public class AppChooser extends RosAppActivity {
     //Note, I've temporarily disabled caching.
     if (System.currentTimeMillis() - availableAppsCacheTime >= 0 * 1000) {
       Log.i("RosAndroid", "sending list apps request");
+      appManager.listApps(new ServiceResponseListener<ListApps.Response>() {
+          @Override
+          public void onSuccess(ListApps.Response message) {
+            availableAppsCache = message.available_apps;
+            runningAppsCache = message.running_apps;
+            Log.i("RosAndroid", "ListApps.Response: " + availableAppsCache.size() + " apps");
+            availableAppsCacheTime = System.currentTimeMillis();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                  updateAppList(availableAppsCache, runningAppsCache);
+                }});
+          }
+          @Override
+          public void onFailure(RemoteException e) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                  new AlertDialog.Builder(AppChooser.this).setTitle("Error!").setCancelable(false)
+                    .setMessage("Failed: cannot contact robot!")
+                    .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) { }})
+                    .create().show();
+                }});
+          }
+        });
     }
 
     try {
