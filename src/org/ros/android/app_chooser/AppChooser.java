@@ -56,10 +56,13 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import org.ros.exception.RemoteException;
 import org.ros.node.service.ServiceResponseListener;
+import org.ros.node.parameter.ParameterTree;
 import org.ros.message.app_manager.StatusCodes;
 import org.ros.service.app_manager.ListApps;
 import org.ros.service.app_manager.StopApp;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 
 import java.util.ArrayList;
 
@@ -76,6 +79,7 @@ public class AppChooser extends RosAppActivity {
   private TextView robotNameView;
   private Button deactivate;
   private Button stopApps;
+  private Button appStoreButton;
 
   public AppChooser() {
     availableAppsCache = new ArrayList<App>();
@@ -93,6 +97,8 @@ public class AppChooser extends RosAppActivity {
     deactivate.setVisibility(deactivate.GONE);
     stopApps = (Button) findViewById(R.id.stop_applications);
     stopApps.setVisibility(stopApps.GONE);
+    appStoreButton = (Button) findViewById(R.id.app_store_button);
+    appStoreButton.setVisibility(deactivate.GONE);
 
     dashboard.setView((LinearLayout)findViewById(R.id.top_bar),
                       new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, 
@@ -223,6 +229,21 @@ public class AppChooser extends RosAppActivity {
       e.printStackTrace();
     }
 
+    ParameterTree tree = node.newParameterTree();
+    if (tree.has("robot/app_store_url")) {
+      runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            appStoreButton.setVisibility(stopApps.VISIBLE);
+          }});
+    } else {
+      runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            appStoreButton.setVisibility(stopApps.GONE);
+          }});
+    }
+     
   }
 
   @Override
@@ -239,6 +260,15 @@ public class AppChooser extends RosAppActivity {
 
   public void chooseNewMasterClicked(View view) {
     chooseNewMaster();
+  }
+
+  public void appStoreButtonClicked(View view) {
+    Intent intent = new Intent(this, AppStoreActivity.class);
+    try {
+      AppChooser.this.startActivity(intent);
+      return;
+    } catch (ActivityNotFoundException e) {
+    }
   }
 
   public void deactivateRobotClicked(View view) {

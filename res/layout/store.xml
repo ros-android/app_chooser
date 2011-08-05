@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+  <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content"
+                android:background="#ff404040"
+	        android:id="@+id/store_top_bar" >
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:id="@+id/store_robot_name_view"
+              android:textSize="30sp" /> 
+  </LinearLayout>
+  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:orientation="vertical"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent" 
+		android:id="@+id/app_store_view" >
+    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
+              android:layout_weight="1"
+	      android:text="Installed Apps"
+              android:textSize="30sp" /> 
+    <ListView android:layout_width="fill_parent"
+	      android:layout_height="wrap_content"
+	      android:id="@+id/installed_app_list"
+	      android:divider="#ffffffff" 
+	      android:dividerHeight="14.5sp" 
+	      android:footerDividersEnabled="true"
+	      android:headerDividersEnabled="true" />
+    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
+              android:layout_weight="1"
+	      android:text="Available Apps"
+              android:textSize="30sp" /> 
+    <ListView android:layout_width="fill_parent"
+	      android:layout_height="wrap_content"
+	      android:id="@+id/available_app_list"
+	      android:divider="#ffffffff" 
+	      android:dividerHeight="14.5sp" 
+	      android:footerDividersEnabled="true"
+	      android:headerDividersEnabled="true" />
+    <Button android:layout_width="fill_parent" 
+            android:layout_height="wrap_content" 
+            android:text="Return"
+            android:onClick="exitAppStore" />
+  </LinearLayout>
+
+  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:orientation="vertical"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent" 
+		android:id="@+id/app_detail_view" >
+    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:id="@+id/store_app_name_view"
+              android:textSize="30sp" /> 
+    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:id="@+id/store_app_detail_text_view" /> 
+    <Button android:layout_width="fill_parent" 
+            android:layout_height="wrap_content" 
+            android:text="Install App"
+            android:id="@+id/install_app_button"
+            android:onClick="installApp" />
+    <Button android:layout_width="fill_parent" 
+            android:layout_height="wrap_content" 
+            android:text="Remove App"
+            android:id="@+id/uninstall_app_button"
+            android:onClick="removeApp" />
+    <Button android:layout_width="fill_parent" 
+            android:layout_height="wrap_content" 
+            android:text="View Other Apps"
+            android:onClick="closeDetailView" />
+  </LinearLayout>
+</LinearLayout>
+

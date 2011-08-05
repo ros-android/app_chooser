@@ -40,6 +40,11 @@
 	  android:id="@+id/deactivate_robot"/>
   <Button android:layout_width="fill_parent" 
           android:layout_height="wrap_content" 
+          android:text="App store"
+          android:onClick="appStoreButtonClicked"
+	  android:id="@+id/app_store_button"/>
+  <Button android:layout_width="fill_parent" 
+          android:layout_height="wrap_content" 
           android:text="Choose new master"
           android:onClick="chooseNewMasterClicked"/>
 </LinearLayout>
