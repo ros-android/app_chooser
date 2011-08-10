@@ -60,6 +60,7 @@ import org.ros.node.parameter.ParameterTree;
 import org.ros.message.app_manager.StatusCodes;
 import org.ros.service.app_manager.ListApps;
 import org.ros.service.app_manager.StopApp;
+import org.ros.service.app_manager.StartApp;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -111,6 +112,89 @@ public class AppChooser extends RosAppActivity {
     setStatus("");
     // TODO: start spinner
     updateAppList(availableAppsCache, runningAppsCache);
+  }
+
+  /** 
+   * Start/stop applications
+   * @param app
+   */
+  public void onAppClicked(final App app) {
+    if( appManager == null ) {
+      safeSetStatus("Failed: appManager is not ready.");
+      return;
+    }
+    boolean running = false;
+    for (App i : runningAppsCache) {
+      if (i.name.equals(app.name)) {
+        running = true;
+      }
+    }
+
+    if (!running) {
+      runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            final ProgressDialog progress = ProgressDialog.show(AppChooser.this,
+                                  "Starting Application", "Starting " + app.display_name + "...", true, false);
+            progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            appManager.startApp(app.name, new ServiceResponseListener<StartApp.Response>() {
+                @Override
+                public void onSuccess(StartApp.Response message) {
+                  if (message.started) {
+                    safeSetStatus("started");
+                  } else {
+                    safeSetStatus(message.message);
+                  }
+                  AppChooser.this.runOnUiThread(new Runnable() {
+                      @Override
+                      public void run() {
+                        progress.dismiss();
+                      }});
+                }
+                
+                @Override
+                public void onFailure(RemoteException e) {
+                  safeSetStatus("Failed: " + e.getMessage());
+                  AppChooser.this.runOnUiThread(new Runnable() {
+                      @Override
+                      public void run() {
+                        progress.dismiss();
+                      }});
+                }});
+          }});
+    } else {
+      runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            final ProgressDialog progress = ProgressDialog.show(AppChooser.this,
+                                  "Stop Application", "Stopping " + app.display_name + "...", true, false);
+            progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            appManager.stopApp(app.name, new ServiceResponseListener<StopApp.Response>() {
+                @Override
+                public void onSuccess(StopApp.Response message) {
+                  if (message.stopped) {
+                    safeSetStatus("stopped");
+                  } else {
+                    safeSetStatus(message.message);
+                  }
+                  AppChooser.this.runOnUiThread(new Runnable() {
+                      @Override
+                      public void run() {
+                        progress.dismiss();
+                      }});
+                }
+                
+                @Override
+                public void onFailure(RemoteException e) {
+                  safeSetStatus("Failed: " + e.getMessage());
+                  AppChooser.this.runOnUiThread(new Runnable() {
+                      @Override
+                      public void run() {
+                        progress.dismiss();
+                      }});
+                }});
+          }});
+    }
   }
 
   /**

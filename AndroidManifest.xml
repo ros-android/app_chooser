@@ -24,10 +24,6 @@
               android:label="@string/app_name">
     </activity>
 
-    <activity android:name=".StubAppActivity"
-              android:label="@string/app_name">
-    </activity>
-
     <activity android:name=".AppStoreActivity"
               android:label="@string/app_name">
     </activity>

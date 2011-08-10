@@ -54,7 +54,9 @@ public class AppLauncher {
     ArrayList<ClientAppData> android_apps = new ArrayList<ClientAppData>();
 
     if (app.client_apps.size() == 0) {
-      launchStubApp(parentActivity, app);
+      if (parentActivity instanceof AppChooser) {
+        ((AppChooser)parentActivity).onAppClicked(app);
+      }
       return;
     }
 
@@ -136,27 +138,5 @@ public class AppLauncher {
       }
     });
     dialog.show();
-  }
-
-  /** Launch the "stub" app */
-  static public void launchStubApp(Activity parentActivity, App robotApp) {
-    Intent intent = new Intent(parentActivity, StubAppActivity.class);
-    intent.putExtra(AppManager.PACKAGE + ".robot_app_display_name", robotApp.display_name);
-    intent.putExtra(AppManager.PACKAGE + ".robot_app_name", robotApp.name);
-    try {
-      parentActivity.startActivity(intent);
-      return;
-    } catch (ActivityNotFoundException e) {
-      AlertDialog.Builder dialog = new AlertDialog.Builder(parentActivity);
-      dialog.setTitle("Android ROS stub app not installed.");
-      dialog
-          .setMessage("This robot app requires the stub client user interface app, but it is missing.");
-      dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dlog, int i) {
-          dlog.dismiss();
-        }
-      });
-    }
   }
 }
