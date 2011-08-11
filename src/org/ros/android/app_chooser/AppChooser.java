@@ -51,7 +51,6 @@ import org.ros.message.app_manager.App;
 import org.ros.message.app_manager.AppList;
 import ros.android.activity.RosAppActivity;
 import android.widget.LinearLayout;
-import ros.android.util.Dashboard;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import org.ros.exception.RemoteException;
@@ -76,7 +75,6 @@ public class AppChooser extends RosAppActivity {
   private ArrayList<App> availableAppsCache;
   private ArrayList<App> runningAppsCache;
   private long availableAppsCacheTime;
-  private Dashboard dashboard;
   private TextView robotNameView;
   private Button deactivate;
   private Button stopApps;
@@ -85,13 +83,14 @@ public class AppChooser extends RosAppActivity {
   public AppChooser() {
     availableAppsCache = new ArrayList<App>();
     availableAppsCacheTime = 0;
-    dashboard = new Dashboard(this);
   }
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    setDefaultAppName(null);
+    setDashboardResource(R.id.top_bar);
+    setMainWindowResource(R.layout.main);
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.main);
     robotNameView = (TextView) findViewById(R.id.robot_name_view);
 
     deactivate = (Button) findViewById(R.id.deactivate_robot);
@@ -100,18 +99,17 @@ public class AppChooser extends RosAppActivity {
     stopApps.setVisibility(stopApps.GONE);
     appStoreButton = (Button) findViewById(R.id.app_store_button);
     appStoreButton.setVisibility(deactivate.GONE);
-
-    dashboard.setView((LinearLayout)findViewById(R.id.top_bar),
-                      new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, 
-                                                    LinearLayout.LayoutParams.WRAP_CONTENT));
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     setStatus("");
-    // TODO: start spinner
-    updateAppList(availableAppsCache, runningAppsCache);
+    if (appManager != null) {
+      forceUpdate();
+    } else {
+      updateAppList(availableAppsCache, runningAppsCache);
+    }
   }
 
   /** 
@@ -196,7 +194,35 @@ public class AppChooser extends RosAppActivity {
           }});
     }
   }
-
+  private void forceUpdate() {
+    appManager.listApps(new ServiceResponseListener<ListApps.Response>() {
+        @Override
+        public void onSuccess(ListApps.Response message) {
+          availableAppsCache = message.available_apps;
+          runningAppsCache = message.running_apps;
+          Log.i("RosAndroid", "ListApps.Response: " + availableAppsCache.size() + " apps");
+          availableAppsCacheTime = System.currentTimeMillis();
+          runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                updateAppList(availableAppsCache, runningAppsCache);
+              }});
+        }
+        @Override
+        public void onFailure(RemoteException e) {
+          runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                new AlertDialog.Builder(AppChooser.this).setTitle("Error!").setCancelable(false)
+                  .setMessage("Failed: cannot contact robot!")
+                  .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                      public void onClick(DialogInterface dialog, int which) { }})
+                  .create().show();
+              }});
+        }
+      });
+  }
+  
   /**
    * Must be run in UI thread.
    * 
@@ -247,14 +273,6 @@ public class AppChooser extends RosAppActivity {
         robotNameView.setText(getCurrentRobot().getRobotName());
       }});
 
-
-    try {
-      dashboard.start(node);
-    } catch (RosException ex) {
-      safeSetStatus("Failed: " + ex.getMessage());
-    }
-    
-
     if (appManager == null) {
       safeSetStatus("Robot not available");
       return;
@@ -263,32 +281,7 @@ public class AppChooser extends RosAppActivity {
     //Note, I've temporarily disabled caching.
     if (System.currentTimeMillis() - availableAppsCacheTime >= 0 * 1000) {
       Log.i("RosAndroid", "sending list apps request");
-      appManager.listApps(new ServiceResponseListener<ListApps.Response>() {
-          @Override
-          public void onSuccess(ListApps.Response message) {
-            availableAppsCache = message.available_apps;
-            runningAppsCache = message.running_apps;
-            Log.i("RosAndroid", "ListApps.Response: " + availableAppsCache.size() + " apps");
-            availableAppsCacheTime = System.currentTimeMillis();
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                  updateAppList(availableAppsCache, runningAppsCache);
-                }});
-          }
-          @Override
-          public void onFailure(RemoteException e) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                  new AlertDialog.Builder(AppChooser.this).setTitle("Error!").setCancelable(false)
-                    .setMessage("Failed: cannot contact robot!")
-                    .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) { }})
-                    .create().show();
-                }});
-          }
-        });
+      forceUpdate();
     }
 
     try {
@@ -339,7 +332,6 @@ public class AppChooser extends RosAppActivity {
         public void run() {
           deactivate.setVisibility(deactivate.GONE);
         }});
-    dashboard.stop();
   }
 
   public void chooseNewMasterClicked(View view) {

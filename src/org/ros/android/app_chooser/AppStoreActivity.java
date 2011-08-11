@@ -35,7 +35,6 @@ package org.ros.android.app_chooser;
 
 import ros.android.activity.RosAppActivity;
 import android.widget.LinearLayout;
-import ros.android.util.Dashboard;
 import android.os.Bundle;
 import org.ros.node.Node;
 import org.ros.exception.RosException;
@@ -83,7 +82,6 @@ import org.ros.node.parameter.ParameterTree;
  * whichever is chosen.
  */
 public class AppStoreActivity extends RosAppActivity {
-  private Dashboard dashboard;
   private TextView robotNameView;
   private TextView storeAppNameView;
   private TextView storeAppDetailTextView;
@@ -102,16 +100,13 @@ public class AppStoreActivity extends RosAppActivity {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    setDefaultAppName(null);
+    setDashboardResource(R.id.store_top_bar);
+    setMainWindowResource(R.layout.store);
     super.onCreate(savedInstanceState);
     setTitle("App Store");
     setContentView(R.layout.store);
     robotNameView = (TextView) findViewById(R.id.store_robot_name_view);
-    if (dashboard == null) {
-      dashboard = new Dashboard(this);
-    }
-    dashboard.setView((LinearLayout)findViewById(R.id.store_top_bar),
-                      new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, 
-                                                    LinearLayout.LayoutParams.WRAP_CONTENT));
     
     installedAppListView = (ListView)findViewById(R.id.installed_app_list);
     availableAppListView = (ListView)findViewById(R.id.available_app_list);
@@ -402,14 +397,6 @@ public class AppStoreActivity extends RosAppActivity {
       e.printStackTrace();
     }
 
-
-    try {
-      dashboard.start(node);
-    } catch (RosException ex) {
-      safeSetStatus("Failed: " + ex.getMessage());
-    }
-
-    
     ParameterTree tree = node.newParameterTree();
     if (tree.has("robot/app_store_directory")) {
       appStoreUrl = tree.getString("robot/app_store_directory");
@@ -445,7 +432,6 @@ public class AppStoreActivity extends RosAppActivity {
   protected void onNodeDestroy(Node node) {
     Log.i("RosAndroid", "onNodeDestroy");
     super.onNodeDestroy(node);
-    dashboard.stop();
   }
 
   private void safeSetStatus(final String statusMessage) {
