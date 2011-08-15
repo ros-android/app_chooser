@@ -79,10 +79,24 @@ public class AppChooser extends RosAppActivity {
   private Button deactivate;
   private Button stopApps;
   private Button appStoreButton;
+  private ProgressDialog progress;
+  private ArrayList<AlertDialog> alerts;
 
   public AppChooser() {
     availableAppsCache = new ArrayList<App>();
     availableAppsCacheTime = 0;
+    alerts = new ArrayList<AlertDialog>();
+  }
+
+  private void stopProgress() {
+    final ProgressDialog temp = progress;
+    progress = null;
+    if (temp != null) {
+      runOnUiThread(new Runnable() {
+          public void run() {
+            temp.dismiss();
+          }});
+    }
   }
 
   @Override
@@ -129,68 +143,56 @@ public class AppChooser extends RosAppActivity {
     }
 
     if (!running) {
+      stopProgress();
       runOnUiThread(new Runnable() {
           @Override
           public void run() {
-            final ProgressDialog progress = ProgressDialog.show(AppChooser.this,
-                                  "Starting Application", "Starting " + app.display_name + "...", true, false);
+            stopProgress();
+            progress = ProgressDialog.show(AppChooser.this,
+                          "Starting Application", "Starting " + app.display_name + "...", true, false);
             progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            appManager.startApp(app.name, new ServiceResponseListener<StartApp.Response>() {
-                @Override
-                public void onSuccess(StartApp.Response message) {
-                  if (message.started) {
-                    safeSetStatus("started");
-                  } else {
-                    safeSetStatus(message.message);
-                  }
-                  AppChooser.this.runOnUiThread(new Runnable() {
-                      @Override
-                      public void run() {
-                        progress.dismiss();
-                      }});
-                }
-                
-                @Override
-                public void onFailure(RemoteException e) {
-                  safeSetStatus("Failed: " + e.getMessage());
-                  AppChooser.this.runOnUiThread(new Runnable() {
-                      @Override
-                      public void run() {
-                        progress.dismiss();
-                      }});
-                }});
+          }});
+      appManager.startApp(app.name, new ServiceResponseListener<StartApp.Response>() {
+          @Override
+          public void onSuccess(StartApp.Response message) {
+            if (message.started) {
+              safeSetStatus("started");
+            } else {
+              safeSetStatus(message.message);
+            }
+            stopProgress();
+          }
+          
+          @Override
+          public void onFailure(RemoteException e) {
+            safeSetStatus("Failed: " + e.getMessage());
+            stopProgress();
           }});
     } else {
+      stopProgress();
       runOnUiThread(new Runnable() {
           @Override
           public void run() {
-            final ProgressDialog progress = ProgressDialog.show(AppChooser.this,
-                                  "Stop Application", "Stopping " + app.display_name + "...", true, false);
+            stopProgress();
+            progress = ProgressDialog.show(AppChooser.this,
+                                           "Stop Application", "Stopping " + app.display_name + "...", true, false);
             progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            appManager.stopApp(app.name, new ServiceResponseListener<StopApp.Response>() {
-                @Override
-                public void onSuccess(StopApp.Response message) {
-                  if (message.stopped) {
-                    safeSetStatus("stopped");
-                  } else {
-                    safeSetStatus(message.message);
-                  }
-                  AppChooser.this.runOnUiThread(new Runnable() {
-                      @Override
-                      public void run() {
-                        progress.dismiss();
-                      }});
-                }
-                
-                @Override
-                public void onFailure(RemoteException e) {
-                  safeSetStatus("Failed: " + e.getMessage());
-                  AppChooser.this.runOnUiThread(new Runnable() {
-                      @Override
-                      public void run() {
-                        progress.dismiss();
-                      }});
-                }});
+          }});
+      appManager.stopApp(app.name, new ServiceResponseListener<StopApp.Response>() {
+          @Override
+          public void onSuccess(StopApp.Response message) {
+            if (message.stopped) {
+              safeSetStatus("stopped");
+            } else {
+              safeSetStatus(message.message);
+            }
+            stopProgress();
+          }
+          
+          @Override
+          public void onFailure(RemoteException e) {
+            safeSetStatus("Failed: " + e.getMessage());
+            stopProgress();
           }});
     }
   }
@@ -213,11 +215,13 @@ public class AppChooser extends RosAppActivity {
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                new AlertDialog.Builder(AppChooser.this).setTitle("Error!").setCancelable(false)
+                AlertDialog d = new AlertDialog.Builder(AppChooser.this).setTitle("Error!").setCancelable(false)
                   .setMessage("Failed: cannot contact robot!")
                   .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                       public void onClick(DialogInterface dialog, int which) { }})
-                  .create().show();
+                  .create();
+                alerts.add(d);
+                d.show();
               }});
         }
       });
@@ -332,6 +336,17 @@ public class AppChooser extends RosAppActivity {
         public void run() {
           deactivate.setVisibility(deactivate.GONE);
         }});
+    stopProgress();
+  }
+  
+  @Override
+  protected void onPause() {
+    super.onPause();
+    stopProgress();
+    for (AlertDialog a : alerts) {
+      a.dismiss();
+    }
+    alerts = new ArrayList<AlertDialog>();
   }
 
   public void chooseNewMasterClicked(View view) {
@@ -348,19 +363,22 @@ public class AppChooser extends RosAppActivity {
   }
 
   public void deactivateRobotClicked(View view) {
-    new AlertDialog.Builder(this).setTitle("Deactivate Robot").setCancelable(false)
+    AlertDialog d = new AlertDialog.Builder(this).setTitle("Deactivate Robot").setCancelable(false)
       .setMessage("Are you sure you want to deactivate the robot? This will power down the"
                   + " robot's arms and allow others to run custom software on it.")
       .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) { terminateRobot(); }})
       .setNegativeButton("No", new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) { }})
-      .create().show();
+      .create();
+    d.show();
+    alerts.add(d);
   }
 
   public void stopApplicationsClicked(View view) {
     final AppChooser activity = this;
-    final ProgressDialog progress = ProgressDialog.show(activity,
+    stopProgress();
+    progress = ProgressDialog.show(activity,
                "Stopping Applications", "Stopping all applications...", true, false);
     progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
     appManager.stopApp("*", new ServiceResponseListener<StopApp.Response>() {
@@ -371,30 +389,30 @@ public class AppChooser extends RosAppActivity {
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
+                AlertDialog d = new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
                   .setMessage("ERROR: " + errorMessage)
                   .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                       public void onClick(DialogInterface dialog, int which) { }})
-                  .create().show();
+                  .create();
+                d.show();
+                alerts.add(d);
               }});
         }
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-              progress.dismiss();
-            }});
+        stopProgress();
       }
       @Override
       public void onFailure(RemoteException e) {
+        stopProgress();
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-              new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
+              AlertDialog d = new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
                 .setMessage("Failed: cannot contact robot!")
                 .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) { }})
-                .create().show();
-              progress.dismiss();
+                .create();
+              d.show();
+              alerts.add(d);
             }});
       }
     });
