@@ -63,6 +63,7 @@ import org.ros.service.app_manager.StartApp;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import ros.android.activity.AppManager;
 
 import java.util.ArrayList;
 
@@ -70,7 +71,7 @@ import java.util.ArrayList;
  * Show a grid of applications that a given robot is capable of, and launch
  * whichever is chosen.
  */
-public class AppChooser extends RosAppActivity {
+public class AppChooser extends RosAppActivity implements AppManager.TerminationCallback {
 
   private ArrayList<App> availableAppsCache;
   private ArrayList<App> runningAppsCache;
@@ -97,6 +98,11 @@ public class AppChooser extends RosAppActivity {
             temp.dismiss();
           }});
     }
+  }
+  
+  @Override
+  public void onAppTermination() {
+    safeSetStatus("Finished");
   }
 
   @Override
@@ -156,7 +162,7 @@ public class AppChooser extends RosAppActivity {
           @Override
           public void onSuccess(StartApp.Response message) {
             if (message.started) {
-              safeSetStatus("started");
+              safeSetStatus("Started");
             } else {
               safeSetStatus(message.message);
             }
@@ -280,6 +286,8 @@ public class AppChooser extends RosAppActivity {
     if (appManager == null) {
       safeSetStatus("Robot not available");
       return;
+    } else {
+      appManager.addTerminationCallback(null, this);
     }
     
     //Note, I've temporarily disabled caching.
