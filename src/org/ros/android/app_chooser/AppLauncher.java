@@ -53,10 +53,17 @@ public class AppLauncher {
   static public void launch(final Activity parentActivity, App app) {
     ArrayList<ClientAppData> android_apps = new ArrayList<ClientAppData>();
 
-    if (app.client_apps.size() == 0) {
-      if (parentActivity instanceof AppChooser) {
-        ((AppChooser)parentActivity).onAppClicked(app);
+    if (parentActivity instanceof AppChooser) {
+      ((AppChooser)parentActivity).onAppClicked(app, app.client_apps.size() > 0);
+    } else {
+      Log.i("RosAndroid", "Could not launch becase parent is not an appchooser");
+      if (app.client_apps.size() == 0) {
+        Log.e("RosAndroid", "Not launching application!!!");
+        return;
       }
+    }
+
+    if (app.client_apps.size() == 0) {
       return;
     }
 

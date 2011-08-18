@@ -136,7 +136,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
    * Start/stop applications
    * @param app
    */
-  public void onAppClicked(final App app) {
+  public void onAppClicked(final App app, final boolean isClientApp) {
     if( appManager == null ) {
       safeSetStatus("Failed: appManager is not ready.");
       return;
@@ -174,7 +174,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
             safeSetStatus("Failed: " + e.getMessage());
             stopProgress();
           }});
-    } else {
+    } else if (!isClientApp) {
       stopProgress();
       runOnUiThread(new Runnable() {
           @Override
