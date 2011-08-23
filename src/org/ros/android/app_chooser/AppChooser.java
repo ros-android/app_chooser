@@ -85,6 +85,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
 
   public AppChooser() {
     availableAppsCache = new ArrayList<App>();
+    runningAppsCache = new ArrayList<App>();
     availableAppsCacheTime = 0;
     alerts = new ArrayList<AlertDialog>();
   }
@@ -125,10 +126,11 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
   protected void onResume() {
     super.onResume();
     setStatus("");
+    availableAppsCache = new ArrayList<App>();
+    runningAppsCache = new ArrayList<App>();
+    updateAppList(availableAppsCache, runningAppsCache);
     if (appManager != null) {
       forceUpdate();
-    } else {
-      updateAppList(availableAppsCache, runningAppsCache);
     }
   }
 
@@ -260,6 +262,13 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
 
   @Override
   protected void onNodeCreate(Node node) {
+    availableAppsCache = new ArrayList<App>();
+    runningAppsCache = new ArrayList<App>();
+    runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          updateAppList(availableAppsCache, runningAppsCache);
+        }});
     Log.i("RosAndroid", "AppChooser.onNodeCreate");
     try {
       super.onNodeCreate(node);
