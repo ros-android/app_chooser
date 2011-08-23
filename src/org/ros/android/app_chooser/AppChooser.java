@@ -217,12 +217,12 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
               }});
         }
         @Override
-        public void onFailure(RemoteException e) {
+        public void onFailure(final RemoteException e) {
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
                 AlertDialog d = new AlertDialog.Builder(AppChooser.this).setTitle("Error!").setCancelable(false)
-                  .setMessage("Failed: cannot contact robot!")
+                  .setMessage("Failed: cannot contact robot:" + e.toString())
                   .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                       public void onClick(DialogInterface dialog, int which) { }})
                   .create();
@@ -409,13 +409,13 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
         stopProgress();
       }
       @Override
-      public void onFailure(RemoteException e) {
+      public void onFailure(final RemoteException e) {
         stopProgress();
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
               AlertDialog d = new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
-                .setMessage("Failed: cannot contact robot!")
+                .setMessage("Failed: cannot contact robot: " + e.toString())
                 .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) { }})
                 .create();
