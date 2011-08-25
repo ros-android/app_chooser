@@ -77,6 +77,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.yaml.snakeyaml.Yaml;
 import org.ros.node.parameter.ParameterTree;
+import android.graphics.BitmapFactory;
+import android.graphics.Bitmap;
+import android.widget.ImageView;
 
 /**
  * Show a grid of applications that a given robot is capable of, and launch
@@ -247,10 +250,22 @@ public class AppStoreActivity extends RosAppActivity {
                 }});
             return;
           }
+          Bitmap bitmap = null;
+          if( app.icon.data.length > 0 && app.icon.format != null &&
+              (app.icon.format.equals("jpeg") || app.icon.format.equals("png")) ) {
+            bitmap = BitmapFactory.decodeByteArray( app.icon.data, 0, app.icon.data.length );
+          }
+          final Bitmap iconBitmap = bitmap;
           Log.i("RosAndroid", "GetInstallationState.Response: " + availableAppsCache.size() + " apps");
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
+                ImageView iv = (ImageView)AppStoreActivity.this.findViewById(R.id.store_icon);
+                if( iconBitmap != null ) {
+                  iv.setImageBitmap(iconBitmap);
+                } else {
+                  iv.setImageResource(R.drawable.icon);
+                }
                 storeAppDetailTextView.setText(app.description.toString());
                 update(availableAppsCache, installedAppsCache);
               }});
@@ -305,6 +320,8 @@ public class AppStoreActivity extends RosAppActivity {
                 update(availableAppsCache, installedAppsCache);
                 appStoreView.setVisibility(appStoreView.GONE);
                 appDetailView.setVisibility(appDetailView.VISIBLE);
+                storeAppDetailTextView.setText("Loading...");
+                ((ImageView)AppStoreActivity.this.findViewById(R.id.store_icon)).setImageResource(R.drawable.icon);
               }});
           updateAppDetails();
         }});
@@ -338,6 +355,7 @@ public class AppStoreActivity extends RosAppActivity {
                 appStoreView.setVisibility(appStoreView.GONE);
                 appDetailView.setVisibility(appDetailView.VISIBLE);
                 storeAppDetailTextView.setText("Loading...");
+                ((ImageView)AppStoreActivity.this.findViewById(R.id.store_icon)).setImageResource(R.drawable.icon);
               }});
           updateAppDetails();
         }});
