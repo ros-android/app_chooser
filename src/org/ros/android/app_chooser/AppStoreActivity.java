@@ -288,18 +288,27 @@ public class AppStoreActivity extends RosAppActivity {
   }
 
   private void update(ArrayList<StoreApp> availableApps, ArrayList<StoreApp> installedApps) {
+    int nInstalledApps = 0;
+    int nAvailableApps = 0;
     String[] installed_application_list;
     String[] installed_application_display;
     String[] available_application_list;
     String[] available_application_display;
 
     int i = 0;
-    installed_application_list = new String[installedApps.toArray().length];
-    installed_application_display = new String[installedApps.toArray().length];
     for (StoreApp a : installedApps) {
-      installed_application_list[i] =  a.name;
-      installed_application_display[i] = a.display_name;
-      i = i + 1;
+      if (!a.hidden) {
+        nInstalledApps++;
+      }
+    }
+    installed_application_list = new String[nInstalledApps];
+    installed_application_display = new String[nInstalledApps];
+    for (StoreApp a : installedApps) {
+      if (!a.hidden) {
+        installed_application_list[i] =  a.name;
+        installed_application_display[i] = a.display_name;
+        i = i + 1;
+      }
     }
 
     installedAppListView.setTextFilterEnabled(true);
@@ -328,12 +337,19 @@ public class AppStoreActivity extends RosAppActivity {
 
     ////
     i = 0;
-    available_application_list = new String[availableApps.toArray().length];
-    available_application_display = new String[availableApps.toArray().length];
     for (StoreApp a : availableApps) {
-      available_application_list[i] =  a.name;
-      available_application_display[i] = a.display_name;
-      i = i + 1;
+      if (!a.hidden) {
+        nAvailableApps++;
+      }
+    }
+    available_application_list = new String[nAvailableApps];
+    available_application_display = new String[nAvailableApps];
+    for (StoreApp a : availableApps) {
+      if (!a.hidden) {
+        available_application_list[i] =  a.name;
+        available_application_display[i] = a.display_name;
+        i = i + 1;
+      }
     }
 
     availableAppListView.setTextFilterEnabled(true);
