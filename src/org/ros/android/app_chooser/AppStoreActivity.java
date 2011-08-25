@@ -34,6 +34,7 @@
 package org.ros.android.app_chooser;
 
 import ros.android.activity.RosAppActivity;
+import ros.android.activity.AppManager;
 import android.widget.LinearLayout;
 import android.os.Bundle;
 import org.ros.node.Node;
@@ -51,17 +52,17 @@ import android.util.Log;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import java.util.ArrayList;
-import org.ros.message.app_manager.App;
+import org.ros.message.app_manager.AppInstallationState;
+import org.ros.message.app_manager.StoreApp;
+import org.ros.service.app_manager.GetAppDetails;
+import org.ros.service.app_manager.GetInstallationState;
+import org.ros.service.app_manager.InstallApp;
+import org.ros.service.app_manager.UninstallApp;
 import org.ros.node.service.ServiceResponseListener;
-import org.ros.service.app_manager.ListApps;
-import org.ros.service.app_manager.StartApp;
-import org.ros.service.app_manager.StopApp;
-import org.ros.message.app_manager.StatusCodes;
 import org.ros.message.MessageListener;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import org.ros.exception.RemoteException;
-import org.ros.message.app_manager.AppList;
 import android.widget.Button;
 import android.app.ProgressDialog;
 import java.util.Map;
@@ -90,13 +91,12 @@ public class AppStoreActivity extends RosAppActivity {
   private boolean installedAppsView;
   private String appSelected;
   private String appSelectedDisplay;
-  private ArrayList<App> availableAppsCache;
-  private ArrayList<App> runningAppsCache;
+  private ArrayList<StoreApp> availableAppsCache;
+  private ArrayList<StoreApp> installedAppsCache;
   private LinearLayout appStoreView;
   private LinearLayout appDetailView;
   private Button installAppButton;
   private Button uninstallAppButton;
-  private String appStoreUrl;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -118,8 +118,8 @@ public class AppStoreActivity extends RosAppActivity {
     uninstallAppButton = (Button)findViewById(R.id.uninstall_app_button);
   }
 
-  private static boolean appInList(ArrayList<App> list, String name) {
-    for (App a : list) {
+  private static boolean appInList(ArrayList<StoreApp> list, String name) {
+    for (StoreApp a : list) {
       if (a.name == name) {
         return true;
       }
@@ -132,10 +132,10 @@ public class AppStoreActivity extends RosAppActivity {
     final ProgressDialog progress = ProgressDialog.show(activity,
                "Installing App", "Installing " + appSelectedDisplay + "...", true, false);
     progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-    appManager.installApp(appSelected, new ServiceResponseListener<StartApp.Response>() {
+    appManager.installApp(appSelected, new ServiceResponseListener<InstallApp.Response>() {
       @Override
-      public void onSuccess(StartApp.Response message) {
-        if (!(message.started || message.error_code == StatusCodes.NOT_RUNNING)) {
+      public void onSuccess(InstallApp.Response message) {
+        if (!message.installed) {
           final String errorMessage = message.message;
           runOnUiThread(new Runnable() {
               @Override
@@ -154,12 +154,12 @@ public class AppStoreActivity extends RosAppActivity {
             }});
       }
       @Override
-      public void onFailure(RemoteException e) {
+      public void onFailure(final RemoteException e) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
               new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
-                .setMessage("Failed: cannot contact robot!")
+                .setMessage("Failed: cannot contact robot: " + e.toString())
                 .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) { }})
                 .create().show();
@@ -169,15 +169,15 @@ public class AppStoreActivity extends RosAppActivity {
     });
   }
 
-  public void removeApp(View view) {
+  public void uninstallApp(View view) {
     final AppStoreActivity activity = this;
     final ProgressDialog progress = ProgressDialog.show(activity,
                "Uninstalling App", "Uninstalling " + appSelectedDisplay + "...", true, false);
     progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-    appManager.removeApp(appSelected, new ServiceResponseListener<StopApp.Response>() {
+    appManager.uninstallApp(appSelected, new ServiceResponseListener<UninstallApp.Response>() {
       @Override
-      public void onSuccess(StopApp.Response message) {
-        if (!(message.stopped || message.error_code == StatusCodes.NOT_RUNNING)) {
+      public void onSuccess(UninstallApp.Response message) {
+        if (!message.uninstalled) {
           final String errorMessage = message.message;
           runOnUiThread(new Runnable() {
               @Override
@@ -196,12 +196,12 @@ public class AppStoreActivity extends RosAppActivity {
             }});
       }
       @Override
-      public void onFailure(RemoteException e) {
+      public void onFailure(final RemoteException e) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
               new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
-                .setMessage("Failed: cannot contact robot!")
+                .setMessage("Failed: cannot contact robot: " + e.toString())
                 .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) { }})
                 .create().show();
@@ -214,7 +214,7 @@ public class AppStoreActivity extends RosAppActivity {
   public void closeDetailView(View view) {
     appSelected = null;
     appSelectedDisplay = null;
-    update(availableAppsCache, runningAppsCache);
+    update(availableAppsCache, installedAppsCache);
   }
 
   
@@ -222,16 +222,63 @@ public class AppStoreActivity extends RosAppActivity {
     finish();
   }
 
-  private void update(ArrayList<App> availableApps, ArrayList<App> runningApps) {
+  public void updateAppDetails() {
+    final AppManager man = appManager;
+    if (man == null) {
+      return;
+    }
+    man.getAppDetails(appSelected, new ServiceResponseListener<GetAppDetails.Response>() {
+        @Override
+        public void onSuccess(GetAppDetails.Response message) {
+          final StoreApp app = message.app;
+          if (app == null) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                  appStoreView.setVisibility(appStoreView.VISIBLE);
+                  appDetailView.setVisibility(appDetailView.GONE);
+                  new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error!").setCancelable(false)
+                    .setMessage("Failed: cannot contact robot! Null application returned")
+                    .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) { }})
+                    .create().show();
+                }});
+            return;
+          }
+          Log.i("RosAndroid", "GetInstallationState.Response: " + availableAppsCache.size() + " apps");
+          runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                storeAppDetailTextView.setText(app.description.toString());
+                update(availableAppsCache, installedAppsCache);
+              }});
+        }
+        @Override
+        public void onFailure(final RemoteException e) {
+          runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                appStoreView.setVisibility(appStoreView.VISIBLE);
+                appDetailView.setVisibility(appDetailView.GONE);
+                new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error!").setCancelable(false)
+                  .setMessage("Failed: cannot contact robot: " + e.toString())
+                  .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                      public void onClick(DialogInterface dialog, int which) { }})
+                  .create().show();
+              }});
+        }});
+  }
+
+  private void update(ArrayList<StoreApp> availableApps, ArrayList<StoreApp> installedApps) {
     String[] installed_application_list;
     String[] installed_application_display;
     String[] available_application_list;
     String[] available_application_display;
 
     int i = 0;
-    installed_application_list = new String[runningApps.toArray().length];
-    installed_application_display = new String[runningApps.toArray().length];
-    for (App a : runningApps) {
+    installed_application_list = new String[installedApps.toArray().length];
+    installed_application_display = new String[installedApps.toArray().length];
+    for (StoreApp a : installedApps) {
       installed_application_list[i] =  a.name;
       installed_application_display[i] = a.display_name;
       i = i + 1;
@@ -252,17 +299,18 @@ public class AppStoreActivity extends RosAppActivity {
           AppStoreActivity.this.runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                update(availableAppsCache, runningAppsCache);
+                update(availableAppsCache, installedAppsCache);
                 appStoreView.setVisibility(appStoreView.GONE);
                 appDetailView.setVisibility(appDetailView.VISIBLE);
               }});
+          updateAppDetails();
         }});
 
     ////
     i = 0;
     available_application_list = new String[availableApps.toArray().length];
     available_application_display = new String[availableApps.toArray().length];
-    for (App a : availableApps) {
+    for (StoreApp a : availableApps) {
       available_application_list[i] =  a.name;
       available_application_display[i] = a.display_name;
       i = i + 1;
@@ -283,16 +331,18 @@ public class AppStoreActivity extends RosAppActivity {
           AppStoreActivity.this.runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                update(availableAppsCache, runningAppsCache);
+                update(availableAppsCache, installedAppsCache);
                 appStoreView.setVisibility(appStoreView.GONE);
                 appDetailView.setVisibility(appDetailView.VISIBLE);
+                storeAppDetailTextView.setText("Loading...");
               }});
+          updateAppDetails();
         }});
 
     availableAppsCache = availableApps;
-    runningAppsCache = runningApps;
+    installedAppsCache = installedApps;
     
-    if (appInList(runningApps, appSelected)) {
+    if (appInList(installedApps, appSelected)) {
       //Is installed
       storeAppNameView.setText(appSelectedDisplay + " (Installed)");
       installAppButton.setVisibility(appStoreView.GONE);
@@ -310,21 +360,6 @@ public class AppStoreActivity extends RosAppActivity {
     if (appSelected == null) {
       appStoreView.setVisibility(appStoreView.VISIBLE);
       appDetailView.setVisibility(appDetailView.GONE);
-    } else {
-      //TODO run this in another thread
-      String url = appStoreUrl + appSelected + ".yaml";
-      String page = getPage(url);
-      if (page == null) {
-        storeAppDetailTextView.setText("Sorry, could not load application info from \"" + url + "\".");
-      } else {
-        Yaml yaml = new Yaml();
-        Map<String, Object> data = (Map<String, Object>)yaml.load(page);
-        try {
-          storeAppDetailTextView.setText(data.get("description").toString());
-        } catch (Exception ex) {
-          storeAppDetailTextView.setText("Sorry, this view failed for the file: " + page);
-        }
-      }
     }
   }
 
@@ -334,6 +369,34 @@ public class AppStoreActivity extends RosAppActivity {
     safeSetStatus("");
     appSelected = null;
   }
+
+  private void runUpdate(boolean remoteUpdate) {
+    appManager.listStoreApps(remoteUpdate, new ServiceResponseListener<GetInstallationState.Response>() {
+        @Override
+        public void onSuccess(GetInstallationState.Response message) {
+          availableAppsCache = message.available_apps;
+          installedAppsCache = message.installed_apps;
+          Log.i("RosAndroid", "GetInstallationState.Response: " + availableAppsCache.size() + " apps");
+          runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                update(availableAppsCache, installedAppsCache);
+              }});
+        }
+        @Override
+        public void onFailure(final RemoteException e) {
+          runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error!").setCancelable(false)
+                  .setMessage("Failed: cannot contact robot: " + e.toString())
+                  .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                      public void onClick(DialogInterface dialog, int which) { }})
+                  .create().show();
+              }});
+        }
+      });
+}
 
   @Override
   protected void onNodeCreate(Node node) {
@@ -345,6 +408,8 @@ public class AppStoreActivity extends RosAppActivity {
       node = null;
       return;
     }
+
+    runUpdate(false);
     
     runOnUiThread(new Runnable() {
         @Override
@@ -352,80 +417,26 @@ public class AppStoreActivity extends RosAppActivity {
           robotNameView.setText(getCurrentRobot().getRobotName());
         }});
     
-    appManager.listStoreApps(new ServiceResponseListener<ListApps.Response>() {
-        @Override
-        public void onSuccess(ListApps.Response message) {
-          availableAppsCache = message.available_apps;
-          runningAppsCache = message.running_apps;
-          Log.i("RosAndroid", "ListApps.Response: " + availableAppsCache.size() + " apps");
-          runOnUiThread(new Runnable() {
-              @Override
-              public void run() {
-                update(availableAppsCache, runningAppsCache);
-              }});
-        }
-        @Override
-        public void onFailure(RemoteException e) {
-          runOnUiThread(new Runnable() {
-              @Override
-              public void run() {
-                new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error!").setCancelable(false)
-                  .setMessage("Failed: cannot contact robot!")
-                  .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
-                      public void onClick(DialogInterface dialog, int which) { }})
-                  .create().show();
-              }});
-        }
-      });
     
     try {
-      appManager.addAppStoreListCallback(new MessageListener<AppList>() {
+      appManager.addAppStoreListCallback(new MessageListener<AppInstallationState>() {
           @Override
-          public void onNewMessage(AppList message) {
+          public void onNewMessage(AppInstallationState message) {
             availableAppsCache = message.available_apps;
-            runningAppsCache = message.running_apps;
-            Log.i("RosAndroid", "ListApps.Response: " + availableAppsCache.size() + " apps");
+            installedAppsCache = message.installed_apps;
+            Log.i("RosAndroid", "GetInstallationState.Response: " + availableAppsCache.size() + " apps");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                  update(availableAppsCache, runningAppsCache);
+                  update(availableAppsCache, installedAppsCache);
                 }
               });
           }
         });
     } catch (RosException e) {
+      Log.e("AppStore", "Exception during callback creation");
       e.printStackTrace();
     }
-
-    ParameterTree tree = node.newParameterTree();
-    if (tree.has("robot/app_store_directory")) {
-      appStoreUrl = tree.getString("robot/app_store_directory");
-    }
-  }
-
-  private String getPage(String uri) {
-    try {
-      HttpClient client = new DefaultHttpClient();
-      HttpGet request = new HttpGet();
-      request.setURI(new URI(uri));
-      HttpResponse response = client.execute(request);
-      BufferedReader in = new BufferedReader
-        (new InputStreamReader(response.getEntity().getContent()));
-      StringBuffer sb = new StringBuffer("");
-      String line = "";
-      String NL = System.getProperty("line.separator");
-      while ((line = in.readLine()) != null) {
-        sb.append(line + NL);
-      }
-      in.close();
-      String page = sb.toString();
-      return page;
-    } catch (java.io.IOException ex) {
-      Log.e("AppStoreActivity", "IOError: " + uri, ex);
-    } catch (java.net.URISyntaxException ex) {
-      Log.e("AppStoreActivity", "URI Invalid: " + uri, ex);
-    }
-    return null;
   }
 
   @Override

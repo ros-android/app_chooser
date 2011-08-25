@@ -63,9 +63,9 @@
             android:onClick="installApp" />
     <Button android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
-            android:text="Remove App"
+            android:text="Uninstall App"
             android:id="@+id/uninstall_app_button"
-            android:onClick="removeApp" />
+            android:onClick="uninstallApp" />
     <Button android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
             android:text="View Other Apps"
