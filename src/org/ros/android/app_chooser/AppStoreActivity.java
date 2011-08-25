@@ -155,6 +155,7 @@ public class AppStoreActivity extends RosAppActivity {
       }
       @Override
       public void onFailure(final RemoteException e) {
+        e.printStackTrace();
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -197,6 +198,7 @@ public class AppStoreActivity extends RosAppActivity {
       }
       @Override
       public void onFailure(final RemoteException e) {
+        e.printStackTrace();
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -255,6 +257,7 @@ public class AppStoreActivity extends RosAppActivity {
         }
         @Override
         public void onFailure(final RemoteException e) {
+          e.printStackTrace();
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
@@ -385,6 +388,7 @@ public class AppStoreActivity extends RosAppActivity {
         }
         @Override
         public void onFailure(final RemoteException e) {
+          e.printStackTrace();
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
