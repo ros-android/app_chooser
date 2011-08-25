@@ -38,6 +38,10 @@
 	      android:headerDividersEnabled="true" />
     <Button android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
+            android:text="Update"
+            android:onClick="updateAppStore" />
+    <Button android:layout_width="fill_parent" 
+            android:layout_height="wrap_content" 
             android:text="Return"
             android:onClick="exitAppStore" />
   </LinearLayout>

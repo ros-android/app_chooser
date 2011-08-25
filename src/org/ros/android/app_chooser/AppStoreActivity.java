@@ -418,7 +418,11 @@ public class AppStoreActivity extends RosAppActivity {
               }});
         }
       });
-}
+  }
+
+  public void updateAppStore(View view) {
+    runUpdate(true);
+  }
 
   @Override
   protected void onNodeCreate(Node node) {
