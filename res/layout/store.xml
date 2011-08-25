@@ -16,26 +16,24 @@
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent" 
 		android:id="@+id/app_store_view" >
-    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
-              android:layout_weight="1"
+    <TextView android:layout_width="fill_parent" android:layout_height="50dp"
 	      android:text="Installed Apps"
               android:textSize="30sp" /> 
     <ListView android:layout_width="fill_parent"
 	      android:layout_height="wrap_content"
 	      android:id="@+id/installed_app_list"
-	      android:divider="#ffffffff" 
-	      android:dividerHeight="14.5sp" 
+	      android:divider="#00000000" 
+	      android:dividerHeight="0sp" 
 	      android:footerDividersEnabled="true"
 	      android:headerDividersEnabled="true" />
-    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
-              android:layout_weight="1"
+    <TextView android:layout_width="fill_parent" android:layout_height="50dp"
 	      android:text="Available Apps"
               android:textSize="30sp" /> 
     <ListView android:layout_width="fill_parent"
 	      android:layout_height="wrap_content"
 	      android:id="@+id/available_app_list"
-	      android:divider="#ffffffff" 
-	      android:dividerHeight="14.5sp" 
+	      android:divider="#00000000" 
+	      android:dividerHeight="0sp" 
 	      android:footerDividersEnabled="true"
 	      android:headerDividersEnabled="true" />
     <Button android:layout_width="fill_parent" 
