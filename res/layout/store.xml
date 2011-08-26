@@ -69,7 +69,7 @@
               android:id="@+id/store_app_detail_text_view" /> 
     <Button android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
-            android:text="Install App"
+            android:text="Install/Upgrade App"
             android:id="@+id/install_app_button"
             android:onClick="installApp" />
     <Button android:layout_width="fill_parent" 

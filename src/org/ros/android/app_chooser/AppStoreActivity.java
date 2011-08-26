@@ -295,6 +295,9 @@ public class AppStoreActivity extends RosAppActivity {
     String[] available_application_list;
     String[] available_application_display;
 
+    installedApps.get(0).version = "TEST_HACK";
+
+
     int i = 0;
     for (StoreApp a : installedApps) {
       if (!a.hidden) {
@@ -306,7 +309,11 @@ public class AppStoreActivity extends RosAppActivity {
     for (StoreApp a : installedApps) {
       if (!a.hidden) {
         installed_application_list[i] =  a.name;
-        installed_application_display[i] = a.display_name;
+        if (!a.version.equals(a.latest_version)) {
+          installed_application_display[i] = a.display_name + " (Upgradable)";
+        } else {
+          installed_application_display[i] = a.display_name;
+        }
         i = i + 1;
       }
     }
@@ -383,6 +390,12 @@ public class AppStoreActivity extends RosAppActivity {
       //Is installed
       storeAppNameView.setText(appSelectedDisplay + " (Installed)");
       installAppButton.setVisibility(appStoreView.GONE);
+      for (StoreApp a : installedApps) {
+        if (a.name == appSelected && !a.version.equals(a.latest_version)) {
+          storeAppNameView.setText(a.display_name + " (Installed, Upgrade Available)");
+          installAppButton.setVisibility(appStoreView.VISIBLE);
+        }
+      }
       uninstallAppButton.setVisibility(appDetailView.VISIBLE);
     } else if (appInList(availableApps, appSelected)) {
       //Is available
