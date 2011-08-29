@@ -14,7 +14,7 @@
   <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		android:orientation="vertical"
 		android:layout_width="fill_parent"
-		android:layout_height="fill_parent" 
+		android:layout_height="wrap_content" 
 		android:id="@+id/app_store_view" >
     <TextView android:layout_width="fill_parent" android:layout_height="50dp"
 	      android:text="Installed Apps"
@@ -49,7 +49,7 @@
   <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		android:orientation="vertical"
 		android:layout_width="fill_parent"
-		android:layout_height="fill_parent" 
+		android:layout_height="wrap_content" 
 		android:id="@+id/app_detail_view" >
     <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content"
                   android:background="#00000000" >
