@@ -295,8 +295,6 @@ public class AppStoreActivity extends RosAppActivity {
     String[] available_application_list;
     String[] available_application_display;
 
-    installedApps.get(0).version = "TEST_HACK";
-
 
     int i = 0;
     for (StoreApp a : installedApps) {
