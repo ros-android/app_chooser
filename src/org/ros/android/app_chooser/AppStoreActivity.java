@@ -143,7 +143,7 @@ public class AppStoreActivity extends RosAppActivity {
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
+                new AlertDialog.Builder(activity).setTitle("Error on Installation!").setCancelable(false)
                   .setMessage("ERROR: " + errorMessage)
                   .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                       public void onClick(DialogInterface dialog, int which) { }})
@@ -162,7 +162,7 @@ public class AppStoreActivity extends RosAppActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-              new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
+              new AlertDialog.Builder(activity).setTitle("Error on Installation!").setCancelable(false)
                 .setMessage("Failed: cannot contact robot: " + e.toString())
                 .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) { }})
@@ -186,7 +186,7 @@ public class AppStoreActivity extends RosAppActivity {
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
+                new AlertDialog.Builder(activity).setTitle("Error on Uninstallation!").setCancelable(false)
                   .setMessage("ERROR: " + errorMessage)
                   .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                       public void onClick(DialogInterface dialog, int which) { }})
@@ -205,7 +205,7 @@ public class AppStoreActivity extends RosAppActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-              new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
+              new AlertDialog.Builder(activity).setTitle("Error on Uninstallation").setCancelable(false)
                 .setMessage("Failed: cannot contact robot: " + e.toString())
                 .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) { }})
@@ -242,7 +242,7 @@ public class AppStoreActivity extends RosAppActivity {
                 public void run() {
                   appStoreView.setVisibility(appStoreView.VISIBLE);
                   appDetailView.setVisibility(appDetailView.GONE);
-                  new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error!").setCancelable(false)
+                  new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error on Details Update!").setCancelable(false)
                     .setMessage("Failed: cannot contact robot! Null application returned")
                     .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) { }})
@@ -278,7 +278,7 @@ public class AppStoreActivity extends RosAppActivity {
               public void run() {
                 appStoreView.setVisibility(appStoreView.VISIBLE);
                 appDetailView.setVisibility(appDetailView.GONE);
-                new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error!").setCancelable(false)
+                new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error on Details Update!").setCancelable(false)
                   .setMessage("Failed: cannot contact robot: " + e.toString())
                   .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                       public void onClick(DialogInterface dialog, int which) { }})
@@ -437,7 +437,7 @@ public class AppStoreActivity extends RosAppActivity {
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error!").setCancelable(false)
+                new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error on List Update!").setCancelable(false)
                   .setMessage("Failed: cannot contact robot: " + e.toString())
                   .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                       public void onClick(DialogInterface dialog, int which) { }})
