@@ -30,22 +30,22 @@
             android:layout_height="wrap_content"/>
   <Button android:layout_width="fill_parent" 
           android:layout_height="wrap_content" 
-          android:text="Stop all applications"
+          android:text="Stop Application"
           android:onClick="stopApplicationsClicked"
 	  android:id="@+id/stop_applications"/>
   <Button android:layout_width="fill_parent" 
           android:layout_height="wrap_content" 
-          android:text="Deactivate robot"
+          android:text="Deactivate Robot"
           android:onClick="deactivateRobotClicked"
 	  android:id="@+id/deactivate_robot"/>
   <Button android:layout_width="fill_parent" 
           android:layout_height="wrap_content" 
-          android:text="App store"
+          android:text="App Manager"
           android:onClick="appStoreButtonClicked"
 	  android:id="@+id/app_store_button"/>
   <Button android:layout_width="fill_parent" 
           android:layout_height="wrap_content" 
-          android:text="Choose new master"
+          android:text="Choose New Master"
           android:onClick="chooseNewMasterClicked"/>
 </LinearLayout>
 

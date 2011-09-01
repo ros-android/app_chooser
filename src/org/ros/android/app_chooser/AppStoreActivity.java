@@ -91,15 +91,18 @@ public class AppStoreActivity extends RosAppActivity {
   private TextView storeAppDetailTextView;
   private ListView installedAppListView;
   private ListView availableAppListView;
-  private boolean installedAppsView;
   private String appSelected;
   private String appSelectedDisplay;
   private ArrayList<StoreApp> availableAppsCache;
   private ArrayList<StoreApp> installedAppsCache;
   private LinearLayout appStoreView;
+  private LinearLayout installedAppsView;
   private LinearLayout appDetailView;
   private Button installAppButton;
   private Button uninstallAppButton;
+
+  private enum State { INSTALLED_APPS, APP_STORE };
+  private State lastState;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -115,10 +118,12 @@ public class AppStoreActivity extends RosAppActivity {
     availableAppListView = (ListView)findViewById(R.id.available_app_list);
     appStoreView = (LinearLayout)findViewById(R.id.app_store_view);
     appDetailView = (LinearLayout)findViewById(R.id.app_detail_view);
+    installedAppsView = (LinearLayout)findViewById(R.id.installed_apps_view);
     storeAppNameView = (TextView)findViewById(R.id.store_app_name_view);
     storeAppDetailTextView = (TextView)findViewById(R.id.store_app_detail_text_view);
     installAppButton = (Button)findViewById(R.id.install_app_button);
     uninstallAppButton = (Button)findViewById(R.id.uninstall_app_button);
+    startInstalledApps();
   }
 
   private static boolean appInList(ArrayList<StoreApp> list, String name) {
@@ -216,6 +221,39 @@ public class AppStoreActivity extends RosAppActivity {
     });
   }
 
+  public void startAppStore(View view) {
+    startAppStore();
+  }
+  public void startAppStore() {
+    appStoreView.setVisibility(appStoreView.VISIBLE);
+    installedAppsView.setVisibility(appStoreView.GONE);
+    lastState = State.APP_STORE;
+  }
+
+  public void startInstalledApps(View view) {
+    startInstalledApps();
+  }
+  public void startInstalledApps() {
+    appStoreView.setVisibility(appStoreView.GONE);
+    installedAppsView.setVisibility(appStoreView.VISIBLE);
+    lastState = State.INSTALLED_APPS;
+  }
+
+  public void revertToState() {
+    appDetailView.setVisibility(appDetailView.GONE);
+    switch (lastState) {
+    case INSTALLED_APPS:
+      startInstalledApps();
+      break;
+    case APP_STORE:
+      startAppStore();
+      break;
+    default:
+      Log.e("AppStoreActivity", "Bad state: " + lastState);
+      break;
+    }
+  }
+
   public void closeDetailView(View view) {
     appSelected = null;
     appSelectedDisplay = null;
@@ -240,7 +278,7 @@ public class AppStoreActivity extends RosAppActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                  appStoreView.setVisibility(appStoreView.VISIBLE);
+                  revertToState();
                   appDetailView.setVisibility(appDetailView.GONE);
                   new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error on Details Update!").setCancelable(false)
                     .setMessage("Failed: cannot contact robot! Null application returned")
@@ -276,7 +314,7 @@ public class AppStoreActivity extends RosAppActivity {
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                appStoreView.setVisibility(appStoreView.VISIBLE);
+                revertToState();
                 appDetailView.setVisibility(appDetailView.GONE);
                 new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error on Details Update!").setCancelable(false)
                   .setMessage("Failed: cannot contact robot: " + e.toString())
@@ -332,6 +370,7 @@ public class AppStoreActivity extends RosAppActivity {
               @Override
               public void run() {
                 update(availableAppsCache, installedAppsCache);
+                installedAppsView.setVisibility(appStoreView.GONE);
                 appStoreView.setVisibility(appStoreView.GONE);
                 appDetailView.setVisibility(appDetailView.VISIBLE);
                 storeAppDetailTextView.setText("Loading...");
@@ -373,6 +412,7 @@ public class AppStoreActivity extends RosAppActivity {
               @Override
               public void run() {
                 update(availableAppsCache, installedAppsCache);
+                installedAppsView.setVisibility(appStoreView.GONE);
                 appStoreView.setVisibility(appStoreView.GONE);
                 appDetailView.setVisibility(appDetailView.VISIBLE);
                 storeAppDetailTextView.setText("Loading...");
@@ -406,8 +446,7 @@ public class AppStoreActivity extends RosAppActivity {
     }
 
     if (appSelected == null) {
-      appStoreView.setVisibility(appStoreView.VISIBLE);
-      appDetailView.setVisibility(appDetailView.GONE);
+      revertToState();
     }
   }
 
