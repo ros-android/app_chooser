@@ -176,7 +176,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
             safeSetStatus("Failed: " + e.getMessage());
             stopProgress();
           }});
-    } else if (!isClientApp) {
+    } /*else if (!isClientApp) {
       stopProgress();
       runOnUiThread(new Runnable() {
           @Override
@@ -202,7 +202,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
             safeSetStatus("Failed: " + e.getMessage());
             stopProgress();
           }});
-    }
+          }*/
   }
   private void forceUpdate() {
     appManager.listApps(new ServiceResponseListener<ListApps.Response>() {
