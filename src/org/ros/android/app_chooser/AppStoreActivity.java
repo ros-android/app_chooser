@@ -225,6 +225,7 @@ public class AppStoreActivity extends RosAppActivity {
     startAppStore();
   }
   public void startAppStore() {
+    appDetailView.setVisibility(appDetailView.GONE);
     appStoreView.setVisibility(appStoreView.VISIBLE);
     installedAppsView.setVisibility(appStoreView.GONE);
     lastState = State.APP_STORE;
@@ -234,6 +235,7 @@ public class AppStoreActivity extends RosAppActivity {
     startInstalledApps();
   }
   public void startInstalledApps() {
+    appDetailView.setVisibility(appDetailView.GONE);
     appStoreView.setVisibility(appStoreView.GONE);
     installedAppsView.setVisibility(appStoreView.VISIBLE);
     lastState = State.INSTALLED_APPS;
