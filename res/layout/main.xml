@@ -41,8 +41,8 @@
   <Button android:layout_width="fill_parent" 
           android:layout_height="wrap_content" 
           android:text="App Manager"
-          android:onClick="appStoreButtonClicked"
-	  android:id="@+id/app_store_button"/>
+          android:onClick="exchangeButtonClicked"
+	  android:id="@+id/exchange_button"/>
   <Button android:layout_width="fill_parent" 
           android:layout_height="wrap_content" 
           android:text="Choose New Master"

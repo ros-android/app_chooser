@@ -25,7 +25,7 @@
               android:label="@string/app_name">
     </activity>
 
-    <activity android:name=".AppStoreActivity"
+    <activity android:name=".ExchangeActivity"
               android:screenOrientation="nosensor" android:configChanges="orientation|keyboardHidden"
               android:label="@string/app_name">
     </activity>

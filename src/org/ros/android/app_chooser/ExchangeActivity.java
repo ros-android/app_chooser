@@ -53,7 +53,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import java.util.ArrayList;
 import org.ros.message.app_manager.AppInstallationState;
-import org.ros.message.app_manager.StoreApp;
+import org.ros.message.app_manager.ExchangeApp;
 import org.ros.service.app_manager.GetAppDetails;
 import org.ros.service.app_manager.GetInstallationState;
 import org.ros.service.app_manager.InstallApp;
@@ -85,49 +85,49 @@ import android.widget.ImageView;
  * Show a grid of applications that a given robot is capable of, and launch
  * whichever is chosen.
  */
-public class AppStoreActivity extends RosAppActivity {
+public class ExchangeActivity extends RosAppActivity {
   private TextView robotNameView;
-  private TextView storeAppNameView;
-  private TextView storeAppDetailTextView;
+  private TextView exchangeAppNameView;
+  private TextView exchangeAppDetailTextView;
   private ListView installedAppListView;
   private ListView availableAppListView;
   private String appSelected;
   private String appSelectedDisplay;
-  private ArrayList<StoreApp> availableAppsCache;
-  private ArrayList<StoreApp> installedAppsCache;
-  private LinearLayout appStoreView;
+  private ArrayList<ExchangeApp> availableAppsCache;
+  private ArrayList<ExchangeApp> installedAppsCache;
+  private LinearLayout appExchangeView;
   private LinearLayout installedAppsView;
   private LinearLayout appDetailView;
   private Button installAppButton;
   private Button uninstallAppButton;
 
-  private enum State { INSTALLED_APPS, APP_STORE };
+  private enum State { INSTALLED_APPS, APP_EXCHANGE };
   private State lastState;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     setDefaultAppName(null);
-    setDashboardResource(R.id.store_top_bar);
-    setMainWindowResource(R.layout.store);
+    setDashboardResource(R.id.exchange_top_bar);
+    setMainWindowResource(R.layout.exchange);
     super.onCreate(savedInstanceState);
-    setTitle("App Store");
-    setContentView(R.layout.store);
-    robotNameView = (TextView) findViewById(R.id.store_robot_name_view);
+    setTitle("App Exchange");
+    setContentView(R.layout.exchange);
+    robotNameView = (TextView) findViewById(R.id.exchange_robot_name_view);
     
     installedAppListView = (ListView)findViewById(R.id.installed_app_list);
     availableAppListView = (ListView)findViewById(R.id.available_app_list);
-    appStoreView = (LinearLayout)findViewById(R.id.app_store_view);
+    appExchangeView = (LinearLayout)findViewById(R.id.app_exchange_view);
     appDetailView = (LinearLayout)findViewById(R.id.app_detail_view);
     installedAppsView = (LinearLayout)findViewById(R.id.installed_apps_view);
-    storeAppNameView = (TextView)findViewById(R.id.store_app_name_view);
-    storeAppDetailTextView = (TextView)findViewById(R.id.store_app_detail_text_view);
+    exchangeAppNameView = (TextView)findViewById(R.id.exchange_app_name_view);
+    exchangeAppDetailTextView = (TextView)findViewById(R.id.exchange_app_detail_text_view);
     installAppButton = (Button)findViewById(R.id.install_app_button);
     uninstallAppButton = (Button)findViewById(R.id.uninstall_app_button);
     startInstalledApps();
   }
 
-  private static boolean appInList(ArrayList<StoreApp> list, String name) {
-    for (StoreApp a : list) {
+  private static boolean appInList(ArrayList<ExchangeApp> list, String name) {
+    for (ExchangeApp a : list) {
       if (a.name == name) {
         return true;
       }
@@ -136,7 +136,7 @@ public class AppStoreActivity extends RosAppActivity {
   }
 
   public void installApp(View view) {
-    final AppStoreActivity activity = this;
+    final ExchangeActivity activity = this;
     final ProgressDialog progress = ProgressDialog.show(activity,
                "Installing App", "Installing " + appSelectedDisplay + "...", true, false);
     progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
@@ -179,7 +179,7 @@ public class AppStoreActivity extends RosAppActivity {
   }
 
   public void uninstallApp(View view) {
-    final AppStoreActivity activity = this;
+    final ExchangeActivity activity = this;
     final ProgressDialog progress = ProgressDialog.show(activity,
                "Uninstalling App", "Uninstalling " + appSelectedDisplay + "...", true, false);
     progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
@@ -221,14 +221,14 @@ public class AppStoreActivity extends RosAppActivity {
     });
   }
 
-  public void startAppStore(View view) {
-    startAppStore();
+  public void startAppExchange(View view) {
+    startAppExchange();
   }
-  public void startAppStore() {
+  public void startAppExchange() {
     appDetailView.setVisibility(appDetailView.GONE);
-    appStoreView.setVisibility(appStoreView.VISIBLE);
-    installedAppsView.setVisibility(appStoreView.GONE);
-    lastState = State.APP_STORE;
+    appExchangeView.setVisibility(appExchangeView.VISIBLE);
+    installedAppsView.setVisibility(appExchangeView.GONE);
+    lastState = State.APP_EXCHANGE;
   }
 
   public void startInstalledApps(View view) {
@@ -236,8 +236,8 @@ public class AppStoreActivity extends RosAppActivity {
   }
   public void startInstalledApps() {
     appDetailView.setVisibility(appDetailView.GONE);
-    appStoreView.setVisibility(appStoreView.GONE);
-    installedAppsView.setVisibility(appStoreView.VISIBLE);
+    appExchangeView.setVisibility(appExchangeView.GONE);
+    installedAppsView.setVisibility(appExchangeView.VISIBLE);
     lastState = State.INSTALLED_APPS;
   }
 
@@ -247,11 +247,11 @@ public class AppStoreActivity extends RosAppActivity {
     case INSTALLED_APPS:
       startInstalledApps();
       break;
-    case APP_STORE:
-      startAppStore();
+    case APP_EXCHANGE:
+      startAppExchange();
       break;
     default:
-      Log.e("AppStoreActivity", "Bad state: " + lastState);
+      Log.e("AppExchangeActivity", "Bad state: " + lastState);
       break;
     }
   }
@@ -263,7 +263,7 @@ public class AppStoreActivity extends RosAppActivity {
   }
 
   
-  public void exitAppStore(View view) {
+  public void exitAppExchange(View view) {
     finish();
   }
 
@@ -275,14 +275,14 @@ public class AppStoreActivity extends RosAppActivity {
     man.getAppDetails(appSelected, new ServiceResponseListener<GetAppDetails.Response>() {
         @Override
         public void onSuccess(GetAppDetails.Response message) {
-          final StoreApp app = message.app;
+          final ExchangeApp app = message.app;
           if (app == null) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                   revertToState();
                   appDetailView.setVisibility(appDetailView.GONE);
-                  new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error on Details Update!").setCancelable(false)
+                  new AlertDialog.Builder(ExchangeActivity.this).setTitle("Error on Details Update!").setCancelable(false)
                     .setMessage("Failed: cannot contact robot! Null application returned")
                     .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) { }})
@@ -300,13 +300,13 @@ public class AppStoreActivity extends RosAppActivity {
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                ImageView iv = (ImageView)AppStoreActivity.this.findViewById(R.id.store_icon);
+                ImageView iv = (ImageView)ExchangeActivity.this.findViewById(R.id.exchange_icon);
                 if( iconBitmap != null ) {
                   iv.setImageBitmap(iconBitmap);
                 } else {
                   iv.setImageResource(R.drawable.icon);
                 }
-                storeAppDetailTextView.setText(app.description.toString());
+                exchangeAppDetailTextView.setText(app.description.toString());
                 update(availableAppsCache, installedAppsCache);
               }});
         }
@@ -318,7 +318,7 @@ public class AppStoreActivity extends RosAppActivity {
               public void run() {
                 revertToState();
                 appDetailView.setVisibility(appDetailView.GONE);
-                new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error on Details Update!").setCancelable(false)
+                new AlertDialog.Builder(ExchangeActivity.this).setTitle("Error on Details Update!").setCancelable(false)
                   .setMessage("Failed: cannot contact robot: " + e.toString())
                   .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                       public void onClick(DialogInterface dialog, int which) { }})
@@ -327,7 +327,7 @@ public class AppStoreActivity extends RosAppActivity {
         }});
   }
 
-  private void update(ArrayList<StoreApp> availableApps, ArrayList<StoreApp> installedApps) {
+  private void update(ArrayList<ExchangeApp> availableApps, ArrayList<ExchangeApp> installedApps) {
     int nInstalledApps = 0;
     int nAvailableApps = 0;
     String[] installed_application_list;
@@ -337,14 +337,14 @@ public class AppStoreActivity extends RosAppActivity {
 
 
     int i = 0;
-    for (StoreApp a : installedApps) {
+    for (ExchangeApp a : installedApps) {
       if (!a.hidden) {
         nInstalledApps++;
       }
     }
     installed_application_list = new String[nInstalledApps];
     installed_application_display = new String[nInstalledApps];
-    for (StoreApp a : installedApps) {
+    for (ExchangeApp a : installedApps) {
       if (!a.hidden) {
         installed_application_list[i] =  a.name;
         if (!a.version.equals(a.latest_version)) {
@@ -367,30 +367,30 @@ public class AppStoreActivity extends RosAppActivity {
         public void onItemClick(AdapterView adapter, View view, int index, long id) {
           appSelected = installed_application_list_array[index];
           appSelectedDisplay = installed_application_display_array[index];
-          Log.i("AppStoreActivity", appSelected);
-          AppStoreActivity.this.runOnUiThread(new Runnable() {
+          Log.i("ExchangeActivity", appSelected);
+          ExchangeActivity.this.runOnUiThread(new Runnable() {
               @Override
               public void run() {
                 update(availableAppsCache, installedAppsCache);
-                installedAppsView.setVisibility(appStoreView.GONE);
-                appStoreView.setVisibility(appStoreView.GONE);
+                installedAppsView.setVisibility(appExchangeView.GONE);
+                appExchangeView.setVisibility(appExchangeView.GONE);
                 appDetailView.setVisibility(appDetailView.VISIBLE);
-                storeAppDetailTextView.setText("Loading...");
-                ((ImageView)AppStoreActivity.this.findViewById(R.id.store_icon)).setImageResource(R.drawable.icon);
+                exchangeAppDetailTextView.setText("Loading...");
+                ((ImageView)ExchangeActivity.this.findViewById(R.id.exchange_icon)).setImageResource(R.drawable.icon);
               }});
           updateAppDetails();
         }});
 
     ////
     i = 0;
-    for (StoreApp a : availableApps) {
+    for (ExchangeApp a : availableApps) {
       if (!a.hidden) {
         nAvailableApps++;
       }
     }
     available_application_list = new String[nAvailableApps];
     available_application_display = new String[nAvailableApps];
-    for (StoreApp a : availableApps) {
+    for (ExchangeApp a : availableApps) {
       if (!a.hidden) {
         available_application_list[i] =  a.name;
         available_application_display[i] = a.display_name;
@@ -409,16 +409,16 @@ public class AppStoreActivity extends RosAppActivity {
         public void onItemClick(AdapterView adapter, View view, int index, long id) {
           appSelected = available_application_list_array[index];
           appSelectedDisplay = available_application_display_array[index];
-          Log.i("AppStoreActivity", appSelected);
-          AppStoreActivity.this.runOnUiThread(new Runnable() {
+          Log.i("ExchangeActivity", appSelected);
+          ExchangeActivity.this.runOnUiThread(new Runnable() {
               @Override
               public void run() {
                 update(availableAppsCache, installedAppsCache);
-                installedAppsView.setVisibility(appStoreView.GONE);
-                appStoreView.setVisibility(appStoreView.GONE);
+                installedAppsView.setVisibility(appExchangeView.GONE);
+                appExchangeView.setVisibility(appExchangeView.GONE);
                 appDetailView.setVisibility(appDetailView.VISIBLE);
-                storeAppDetailTextView.setText("Loading...");
-                ((ImageView)AppStoreActivity.this.findViewById(R.id.store_icon)).setImageResource(R.drawable.icon);
+                exchangeAppDetailTextView.setText("Loading...");
+                ((ImageView)ExchangeActivity.this.findViewById(R.id.exchange_icon)).setImageResource(R.drawable.icon);
               }});
           updateAppDetails();
         }});
@@ -428,19 +428,19 @@ public class AppStoreActivity extends RosAppActivity {
     
     if (appInList(installedApps, appSelected)) {
       //Is installed
-      storeAppNameView.setText(appSelectedDisplay + " (Installed)");
-      installAppButton.setVisibility(appStoreView.GONE);
-      for (StoreApp a : installedApps) {
+      exchangeAppNameView.setText(appSelectedDisplay + " (Installed)");
+      installAppButton.setVisibility(appExchangeView.GONE);
+      for (ExchangeApp a : installedApps) {
         if (a.name == appSelected && !a.version.equals(a.latest_version)) {
-          storeAppNameView.setText(a.display_name + " (Installed, Upgrade Available)");
-          installAppButton.setVisibility(appStoreView.VISIBLE);
+          exchangeAppNameView.setText(a.display_name + " (Installed, Upgrade Available)");
+          installAppButton.setVisibility(appExchangeView.VISIBLE);
         }
       }
       uninstallAppButton.setVisibility(appDetailView.VISIBLE);
     } else if (appInList(availableApps, appSelected)) {
       //Is available
-      storeAppNameView.setText(appSelectedDisplay + " (Not Installed)");
-      installAppButton.setVisibility(appStoreView.VISIBLE);
+      exchangeAppNameView.setText(appSelectedDisplay + " (Not Installed)");
+      installAppButton.setVisibility(appExchangeView.VISIBLE);
       uninstallAppButton.setVisibility(appDetailView.GONE);
     } else {
       appSelected = null; //Bad app!
@@ -460,7 +460,7 @@ public class AppStoreActivity extends RosAppActivity {
   }
 
   private void runUpdate(boolean remoteUpdate) {
-    appManager.listStoreApps(remoteUpdate, new ServiceResponseListener<GetInstallationState.Response>() {
+    appManager.listExchangeApps(remoteUpdate, new ServiceResponseListener<GetInstallationState.Response>() {
         @Override
         public void onSuccess(GetInstallationState.Response message) {
           availableAppsCache = message.available_apps;
@@ -478,7 +478,7 @@ public class AppStoreActivity extends RosAppActivity {
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
-                new AlertDialog.Builder(AppStoreActivity.this).setTitle("Error on List Update!").setCancelable(false)
+                new AlertDialog.Builder(ExchangeActivity.this).setTitle("Error on List Update!").setCancelable(false)
                   .setMessage("Failed: cannot contact robot: " + e.toString())
                   .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                       public void onClick(DialogInterface dialog, int which) { }})
@@ -488,13 +488,13 @@ public class AppStoreActivity extends RosAppActivity {
       });
   }
 
-  public void updateAppStore(View view) {
+  public void updateAppExchange(View view) {
     runUpdate(true);
   }
 
   @Override
   protected void onNodeCreate(Node node) {
-    Log.i("RosAndroid", "AppStoreActivity.onNodeCreate");
+    Log.i("RosAndroid", "ExchangeActivity.onNodeCreate");
     try {
       super.onNodeCreate(node);
     } catch( Exception ex ) {
@@ -513,7 +513,7 @@ public class AppStoreActivity extends RosAppActivity {
     
     
     try {
-      appManager.addAppStoreListCallback(new MessageListener<AppInstallationState>() {
+      appManager.addExchangeListCallback(new MessageListener<AppInstallationState>() {
           @Override
           public void onNewMessage(AppInstallationState message) {
             availableAppsCache = message.available_apps;
@@ -528,7 +528,7 @@ public class AppStoreActivity extends RosAppActivity {
           }
         });
     } catch (RosException e) {
-      Log.e("AppStore", "Exception during callback creation");
+      Log.e("Exchange", "Exception during callback creation");
       e.printStackTrace();
     }
   }

@@ -79,7 +79,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
   private TextView robotNameView;
   private Button deactivate;
   private Button stopApps;
-  private Button appStoreButton;
+  private Button exchangeButton;
   private ProgressDialog progress;
   private ArrayList<AlertDialog> alerts;
 
@@ -118,8 +118,8 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
     deactivate.setVisibility(deactivate.GONE);
     stopApps = (Button) findViewById(R.id.stop_applications);
     stopApps.setVisibility(stopApps.GONE);
-    appStoreButton = (Button) findViewById(R.id.app_store_button);
-    appStoreButton.setVisibility(deactivate.GONE);
+    exchangeButton = (Button) findViewById(R.id.exchange_button);
+    exchangeButton.setVisibility(deactivate.GONE);
   }
 
   @Override
@@ -328,17 +328,17 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
     }
 
     ParameterTree tree = node.newParameterTree();
-    if (tree.has("robot/app_store_url")) {
+    if (tree.has("robot/exchange_url")) {
       runOnUiThread(new Runnable() {
           @Override
           public void run() {
-            appStoreButton.setVisibility(stopApps.VISIBLE);
+            exchangeButton.setVisibility(stopApps.VISIBLE);
           }});
     } else {
       runOnUiThread(new Runnable() {
           @Override
           public void run() {
-            appStoreButton.setVisibility(stopApps.GONE);
+            exchangeButton.setVisibility(stopApps.GONE);
           }});
     }
      
@@ -370,8 +370,8 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
     chooseNewMaster();
   }
 
-  public void appStoreButtonClicked(View view) {
-    Intent intent = new Intent(this, AppStoreActivity.class);
+  public void exchangeButtonClicked(View view) {
+    Intent intent = new Intent(this, ExchangeActivity.class);
     try {
       AppChooser.this.startActivity(intent);
       return;

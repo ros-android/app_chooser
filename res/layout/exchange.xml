@@ -5,10 +5,10 @@
     android:layout_height="fill_parent" >
   <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content"
                 android:background="#ff404040"
-	        android:id="@+id/store_top_bar" >
+	        android:id="@+id/exchange_top_bar" >
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
               android:layout_weight="1"
-              android:id="@+id/store_robot_name_view"
+              android:id="@+id/exchange_robot_name_view"
               android:textSize="30sp" /> 
   </LinearLayout>
   <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -29,18 +29,18 @@
 	      android:headerDividersEnabled="true" />
     <Button android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
-            android:text="App Store"
-            android:onClick="startAppStore" />
+            android:text="ROS Exchange"
+            android:onClick="startAppExchange" />
     <Button android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
             android:text="Return"
-            android:onClick="exitAppStore" />
+            android:onClick="exitAppExchange" />
   </LinearLayout>
   <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		android:orientation="vertical"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content" 
-		android:id="@+id/app_store_view" >
+		android:id="@+id/app_exchange_view" >
     <TextView android:layout_width="fill_parent" android:layout_height="50dp"
 	      android:text="Available Apps"
               android:textSize="30sp" /> 
@@ -55,7 +55,7 @@
     <Button android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
             android:text="Update"
-            android:onClick="updateAppStore" />
+            android:onClick="updateAppExchange" />
     <Button android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
             android:text="Installed Apps"
@@ -71,18 +71,18 @@
                   android:background="#00000000" >
       <ImageView android:layout_width="80dp"
 		 android:layout_height="80dp"
-		 android:id="@+id/store_icon"
+		 android:id="@+id/exchange_icon"
 		 android:src="@drawable/icon"
 		 android:adjustViewBounds="true"
 		 android:gravity="bottom|center_horizontal"/>
       <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
 		android:layout_weight="1"
-		android:id="@+id/store_app_name_view"
+		android:id="@+id/exchange_app_name_view"
 		android:textSize="30sp" /> 
     </LinearLayout>
     <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
               android:layout_weight="1"
-              android:id="@+id/store_app_detail_text_view" /> 
+              android:id="@+id/exchange_app_detail_text_view" /> 
     <Button android:layout_width="fill_parent" 
             android:layout_height="wrap_content" 
             android:text="Install/Upgrade App"
