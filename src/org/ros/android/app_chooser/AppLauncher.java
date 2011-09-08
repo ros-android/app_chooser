@@ -133,7 +133,7 @@ public class AppLauncher {
     dialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dlog, int i) {
-        Uri uri = Uri.parse("market://search?q=pname:" + installPackage);
+        Uri uri = Uri.parse("market://details?id=" + installPackage);
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         parentActivity.startActivity(intent);
       }
