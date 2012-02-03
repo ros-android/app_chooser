@@ -16,6 +16,12 @@
      android:indeterminate="true"
      android:layout_centerVertical="true"
      android:layout_alignParentRight="true" />
+<LinearLayout android:orientation="vertical"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" >
+<LinearLayout android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_weight="1">
     <ScrollView android:id="@+id/dialog_scrollview"
         android:layout_width="wrap_content" 
         android:layout_height="wrap_content"
@@ -24,17 +30,29 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true">
-
+  <LinearLayout
+            android:id="@+id/layout_ll"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_vertical">
         <TextView android:id="@+id/dialog_textview" 
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:singleLine="false" />
+  </LinearLayout>
     </ScrollView>
+</LinearLayout>
+<LinearLayout
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="6dip">
     <Button android:text="Done!"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_below="@id/dialog_scrollview"
             android:id="@+id/ok_button"/>
+</LinearLayout>
+</LinearLayout>
 </RelativeLayout>
