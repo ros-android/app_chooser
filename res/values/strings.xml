@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">App Chooser</string>
+        <string-array name="installed_context_menu">
+                <item>Uninstall Application</item>
+        </string-array>
+        <string-array name="exchange_context_menu">
+                <item>Install Application</item>
+        </string-array>
 </resources>
