@@ -33,6 +33,7 @@
 
 package org.ros.android.app_chooser;
 
+import org.ros.node.topic.Subscriber;
 import ros.android.activity.RosAppActivity;
 import ros.android.activity.AppManager;
 import android.widget.LinearLayout;
@@ -40,14 +41,23 @@ import android.os.Bundle;
 import org.ros.node.Node;
 import org.ros.exception.RosException;
 import android.content.Intent;
+import android.text.Spannable;
+import android.text.Spannable.Factory;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
 import android.app.Activity;
+import android.view.MotionEvent;
 import android.view.Menu;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.ScrollView;
 import android.widget.ListView;
 import android.widget.ArrayAdapter;
+import android.widget.ProgressBar;
 import android.util.Log;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -65,6 +75,7 @@ import android.content.DialogInterface;
 import org.ros.exception.RemoteException;
 import android.widget.Button;
 import android.app.ProgressDialog;
+import android.app.Dialog;
 import java.util.Map;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
@@ -101,8 +112,19 @@ public class ExchangeActivity extends RosAppActivity {
   private Button installAppButton;
   private Button uninstallAppButton;
 
+  private String[] installed_application_list;
+  private String[] installed_application_display;
+  private String[] available_application_list;
+  private String[] available_application_display;
+
   private enum State { INSTALLED_APPS, APP_EXCHANGE };
   private State lastState;
+  private Dialog dialog;
+  private TextView dialog_text;
+  private Button button;
+  private static final int INSTALLED_ITEM_ID = 0;
+  private static final int AVAILABLE_ITEM_ID = 1;
+  private static final int INSTALL_DIALOG = 0;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -137,9 +159,7 @@ public class ExchangeActivity extends RosAppActivity {
 
   public void installApp(View view) {
     final ExchangeActivity activity = this;
-    final ProgressDialog progress = ProgressDialog.show(activity,
-               "Installing App", "Installing " + appSelectedDisplay + "...", true, false);
-    progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+    showDialog(INSTALL_DIALOG);
     appManager.installApp(appSelected, new ServiceResponseListener<InstallApp.Response>() {
       @Override
       public void onSuccess(InstallApp.Response message) {
@@ -155,11 +175,15 @@ public class ExchangeActivity extends RosAppActivity {
                   .create().show();
               }});
         }
+        
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-              progress.dismiss();
-            }});
+              ProgressBar progress_bar = (ProgressBar) dialog.findViewById(R.id.progress_bar);
+              progress_bar.setVisibility(View.GONE);
+              button.setVisibility(View.VISIBLE);
+              
+            }}); 
       }
       @Override
       public void onFailure(final RemoteException e) {
@@ -172,11 +196,12 @@ public class ExchangeActivity extends RosAppActivity {
                 .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) { }})
                 .create().show();
-              progress.dismiss();
+              removeDialog(INSTALL_DIALOG);
             }});
       }
     });
   }
+ 
 
   public void uninstallApp(View view) {
     final ExchangeActivity activity = this;
@@ -330,11 +355,6 @@ public class ExchangeActivity extends RosAppActivity {
   private void update(ArrayList<ExchangeApp> availableApps, ArrayList<ExchangeApp> installedApps) {
     int nInstalledApps = 0;
     int nAvailableApps = 0;
-    String[] installed_application_list;
-    String[] installed_application_display;
-    String[] available_application_list;
-    String[] available_application_display;
-
 
     int i = 0;
     for (ExchangeApp a : installedApps) {
@@ -363,6 +383,8 @@ public class ExchangeActivity extends RosAppActivity {
     final String [] installed_application_display_array = installed_application_display;
     ArrayAdapter ad = new ArrayAdapter(this,android.R.layout.simple_list_item_1, installed_application_display_array);
     installedAppListView.setAdapter(ad);
+    registerForContextMenu(installedAppListView);
+    registerForContextMenu(availableAppListView);
     installedAppListView.setOnItemClickListener(new OnItemClickListener() {
         public void onItemClick(AdapterView adapter, View view, int index, long id) {
           appSelected = installed_application_list_array[index];
@@ -531,13 +553,41 @@ public class ExchangeActivity extends RosAppActivity {
       Log.e("Exchange", "Exception during callback creation");
       e.printStackTrace();
     }
+    Subscriber client_sub = node.newSubscriber("install_status","std_msgs/String");
+    client_sub.addMessageListener(new MessageListener<org.ros.message.std_msgs.String>() {
+            @Override
+            public void onNewMessage(final org.ros.message.std_msgs.String data) {
+              runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                String newline = System.getProperty("line.separator");
+                addTextToTextView(newline+data.data);  
+              }      
+            });
+          }   
+        }
+      );
   }
-
   @Override
   protected void onNodeDestroy(Node node) {
     Log.i("RosAndroid", "onNodeDestroy");
     super.onNodeDestroy(node);
   }
+
+  public void addTextToTextView(String message) {
+
+    dialog_text.append(message);
+
+    final ScrollView dialog_scroll = (ScrollView) dialog.findViewById(R.id.dialog_scrollview);
+    dialog_scroll.post(new Runnable()
+    { 
+        @Override
+        public void run()
+        {
+            dialog_scroll.fullScroll(View.FOCUS_DOWN);
+        }
+    });
+  }  
 
   private void safeSetStatus(final String statusMessage) {
     final TextView statusView = (TextView) findViewById(R.id.status_view);
@@ -568,4 +618,80 @@ public class ExchangeActivity extends RosAppActivity {
       return super.onOptionsItemSelected(item);
     }
   }
+
+  @Override
+  public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+    if (v.getId()==R.id.installed_app_list) {
+      AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+      appSelected = installed_application_list[info.position];
+      appSelectedDisplay = installed_application_display[info.position];
+      menu.setHeaderTitle(appSelectedDisplay);
+      String[] menuItems = getResources().getStringArray(R.array.installed_context_menu);
+      for (int i = 0; i<menuItems.length; i++) {
+        menu.add(INSTALLED_ITEM_ID, i, i, menuItems[i]);
+      }
+    }
+    else if (v.getId()==R.id.available_app_list) {
+      AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+      appSelected = available_application_list[info.position];
+      appSelectedDisplay = available_application_display[info.position];
+      menu.setHeaderTitle(appSelectedDisplay);
+      String[] menuItems = getResources().getStringArray(R.array.exchange_context_menu);
+      for (int i = 0; i<menuItems.length; i++) {
+        menu.add(AVAILABLE_ITEM_ID, i, i, menuItems[i]);
+      }
+    }
+  }
+
+  @Override
+  public boolean onContextItemSelected(MenuItem item) {
+    AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+    int menuItemIndex = item.getItemId();
+    int groupId = item.getGroupId();
+    switch (groupId) {
+      case INSTALLED_ITEM_ID:
+        switch (menuItemIndex) {
+          case 0:
+            uninstallApp(installedAppListView);
+            return true;
+          default:
+            return false;
+        }
+      case AVAILABLE_ITEM_ID:
+        switch (menuItemIndex) {
+          case 0:
+            installApp(availableAppListView);
+            return true;
+          default:
+            return false;
+        }
+      default:
+        return false;
+    }
+  }
+
+  @Override
+  protected Dialog onCreateDialog(int id) {
+    switch (id) {
+      case INSTALL_DIALOG:
+        dialog = new Dialog(this);
+        dialog.setContentView(R.layout.install_dialog);
+        dialog.setTitle("Installation Messages");
+        dialog_text = (TextView) dialog.findViewById(R.id.dialog_textview);
+        dialog_text.setText("Installing...");
+        button = (Button) dialog.findViewById(R.id.ok_button);
+        button.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(View v) {
+            removeDialog(INSTALL_DIALOG);
+          }
+        });
+        button.setVisibility(View.GONE);
+        break;
+      default:
+        dialog = null;
+    }
+    return dialog;
+  }
+
 }
