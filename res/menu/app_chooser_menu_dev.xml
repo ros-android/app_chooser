@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
   <item android:title="Kill" android:id="@+id/kill"></item>
-  <item android:title="Developer Mode" android:id="@+id/dev"></item>
+  <item android:title="Regular Mode" android:id="@+id/reg"></item>
 </menu>

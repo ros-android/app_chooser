@@ -7,4 +7,8 @@
         <string-array name="exchange_context_menu">
                 <item>Install Application</item>
         </string-array>
+        <string-array name="app_chooser_context_menu">
+                <item>Start Application</item>
+                <item>Stop Application</item>
+        </string-array>
 </resources>

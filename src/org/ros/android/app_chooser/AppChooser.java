@@ -38,6 +38,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -60,12 +62,14 @@ import org.ros.message.app_manager.StatusCodes;
 import org.ros.service.app_manager.ListApps;
 import org.ros.service.app_manager.StopApp;
 import org.ros.service.app_manager.StartApp;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import ros.android.activity.AppManager;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Show a grid of applications that a given robot is capable of, and launch
@@ -82,6 +86,11 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
   private Button exchangeButton;
   private ProgressDialog progress;
   private ArrayList<AlertDialog> alerts;
+  private static final int DEV = 0;
+  private static final int REG = 1;
+  private static final int CLOSE_EXISTING = 0;
+  private static final int MULTI_APP_DISABLED = 1;
+  private int mode = REG;
 
   public AppChooser() {
     availableAppsCache = new ArrayList<App>();
@@ -149,6 +158,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
         running = true;
       }
     }
+   
 
     if (!running) {
       stopProgress();
@@ -165,6 +175,13 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
           public void onSuccess(StartApp.Response message) {
             if (message.started) {
               safeSetStatus("Started");
+            } else if (message.error_code == StatusCodes.MULTIAPP_NOT_SUPPORTED) {
+              runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                  showDialog(MULTI_APP_DISABLED); 
+                }});
+
             } else {
               safeSetStatus(message.message);
             }
@@ -176,6 +193,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
             safeSetStatus("Failed: " + e.getMessage());
             stopProgress();
           }});
+    
     } /*else if (!isClientApp) {
       stopProgress();
       runOnUiThread(new Runnable() {
@@ -204,12 +222,31 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
           }});
           }*/
   }
+
   private void forceUpdate() {
     appManager.listApps(new ServiceResponseListener<ListApps.Response>() {
         @Override
         public void onSuccess(ListApps.Response message) {
           availableAppsCache = message.available_apps;
           runningAppsCache = message.running_apps;
+          ArrayList<String> runningAppsNames = new ArrayList<String>();
+          int i = 0;
+          for (i = 0; i<availableAppsCache.size(); i++) {
+            App item = availableAppsCache.get(i);
+            ArrayList<String> clients = new ArrayList<String>();
+            for (int j = 0; j< item.client_apps.size(); j++) {
+              clients.add(item.client_apps.get(j).client_type);
+            }
+            if (!clients.contains("android") && item.client_apps.size() != 0) {
+              availableAppsCache.remove(i);
+              i--;
+            }
+            
+            if (item.client_apps.size() == 0) {
+              Log.i("AppChooser", "Item name: " + item.name );
+              runningAppsNames.add(item.name);
+            }
+          }
           Log.i("RosAndroid", "ListApps.Response: " + availableAppsCache.size() + " apps");
           availableAppsCacheTime = System.currentTimeMillis();
           runOnUiThread(new Runnable() {
@@ -244,15 +281,38 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
     Log.i("RosAndroid", "updating gridview");
     GridView gridview = (GridView) findViewById(R.id.gridview);
     gridview.setAdapter(new AppAdapter(AppChooser.this, apps, runningApps));
+    registerForContextMenu(gridview);
     gridview.setOnItemClickListener(new OnItemClickListener() {
       @Override
       public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+
+        if (runningAppsCache.size() > 0) {
+          Log.i("AppChooser", "RunningAppsCache greater than zero.");
+        }
+        if ( mode == REG) {
+          Log.i("AppChooser", "MODE is REG" );
+        }
+
+        boolean running = false;
+        App app = availableAppsCache.get(position);
+        for (App i : runningAppsCache) {
+          if (i.name.equals(app.name)) {
+            running = true;
+          }
+        }
+
+
+        if (!running && (runningAppsCache.size() > 0 && mode == REG)) {
+          showDialog(CLOSE_EXISTING);
+          return;
+        }
         AppLauncher.launch(AppChooser.this, apps.get(position));
+        
       }
     });
     if (runningApps != null) {
       if (runningApps.toArray().length != 0) {
-        stopApps.setVisibility(stopApps.VISIBLE);
+        //stopApps.setVisibility(stopApps.VISIBLE);
       } else {
         stopApps.setVisibility(stopApps.GONE);
       }
@@ -311,6 +371,26 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
         public void onNewMessage(AppList message) {
           availableAppsCache = message.available_apps;
           runningAppsCache = message.running_apps;
+          ArrayList<String> runningAppsNames = new ArrayList<String>();
+          int i = 0;
+          for (i = 0; i<availableAppsCache.size(); i++) {
+            App item = availableAppsCache.get(i);
+            ArrayList<String> clients = new ArrayList<String>();
+            for (int j = 0; j< item.client_apps.size(); j++) {
+ 
+              clients.add(item.client_apps.get(j).client_type);
+            }
+
+            if (!clients.contains("android") && item.client_apps.size() != 0) {
+              availableAppsCache.remove(i);
+            }
+
+              if (item.client_apps.size() == 0) {
+              Log.i("AppChooser", "Item name: " + item.name );
+              runningAppsNames.add(item.name);
+            }
+
+          }
           Log.i("RosAndroid", "ListApps.Response: " + availableAppsCache.size() + " apps");
           availableAppsCacheTime = System.currentTimeMillis();
           runOnUiThread(new Runnable() {
@@ -394,6 +474,12 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
 
   public void stopApplicationsClicked(View view) {
     final AppChooser activity = this;
+
+    for (App i : runningAppsCache) {
+      Log.i("AppLauncher", "Sending intent.");
+      AppLauncher.launch(this, i);
+      }
+
     stopProgress();
     progress = ProgressDialog.show(activity,
                "Stopping Applications", "Stopping all applications...", true, false);
@@ -456,11 +542,77 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
     }
   }
 
-  @Override
+  public void stopApplication(App app) {
+      final AppChooser activity = this;
+      stopProgress();
+      progress = ProgressDialog.show(activity,
+               "Stopping Application", "Stopping application...", true, false);
+      progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+      appManager.stopApp(app.name, new ServiceResponseListener<StopApp.Response>() {
+        @Override
+        public void onSuccess(StopApp.Response message) {
+          if (!(message.stopped || message.error_code == StatusCodes.NOT_RUNNING)) {
+            final String errorMessage = message.message;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                  AlertDialog d = new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
+                    .setMessage("ERROR: " + errorMessage)
+                    .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) { }})
+                    .create();
+                  d.show();
+                  alerts.add(d);
+                }});
+          }
+          stopProgress();
+        }
+        @Override
+        public void onFailure(final RemoteException e) {
+          stopProgress(); 
+          runOnUiThread(new Runnable() {
+            @Override
+              public void run() {
+                AlertDialog d = new AlertDialog.Builder(activity).setTitle("Error!").setCancelable(false)
+                  .setMessage("Failed: cannot contact robot: " + e.toString())
+                  .setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                      public void onClick(DialogInterface dialog, int which) { }})
+                  .create();
+                d.show();
+                alerts.add(d);
+              }});
+        }
+      });
+  }
+
+  /*@Override
   public boolean onCreateOptionsMenu(Menu menu) {
+    menu.clear();
     MenuInflater inflater = getMenuInflater();
-    inflater.inflate(R.menu.app_chooser_menu, menu);
-    return true;
+    if (mode == REG) {
+      inflater.inflate(R.menu.app_chooser_menu, menu);
+      return true;
+    } else if (mode == DEV) {
+      inflater.inflate(R.menu.app_chooser_menu_dev, menu);
+      return true;
+    } else {
+      return false;
+    }
+  }*/
+
+  @Override
+  public boolean onPrepareOptionsMenu(Menu menu) {
+    menu.clear();
+    MenuInflater inflater = getMenuInflater();
+    if (mode == REG) {
+      inflater.inflate(R.menu.app_chooser_menu, menu);
+      return true;
+    } else if (mode == DEV) {
+      inflater.inflate(R.menu.app_chooser_menu_dev, menu);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   @Override
@@ -469,8 +621,94 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
     case R.id.kill:
       android.os.Process.killProcess(android.os.Process.myPid());
       return true;
+    case R.id.reg:
+      mode = REG;
+      return true;
+    case R.id.dev:
+      mode = DEV;
+      return true;
     default:
       return super.onOptionsItemSelected(item);
     }
   }
+
+@Override
+  public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+    if (v.getId()==R.id.gridview) {
+      AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+      menu.setHeaderTitle(availableAppsCache.get(info.position).display_name);
+      String[] menuItems = getResources().getStringArray(R.array.app_chooser_context_menu);
+      for (int i = 0; i<menuItems.length; i++) {
+        menu.add(Menu.NONE, i, i, menuItems[i]);
+      }
+    }
+  }
+
+  @Override
+  public boolean onContextItemSelected(MenuItem item) {
+    AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+    int menuItemIndex = item.getItemId();
+    App app = availableAppsCache.get(info.position);
+    switch (menuItemIndex) {
+      case 0:
+        //This is a hack because App Chooser currently doesn't use 'isClientApp' parameter
+        onAppClicked(app, true);
+        AppLauncher.launch(AppChooser.this, app);
+        break;
+      case 1:
+        stopApplication(app);
+        break;
+      default:
+        return false;
+    }
+    return true;
+  }
+
+  @Override
+  protected Dialog onCreateDialog(int id) {
+    //readRobotList();
+    final Dialog dialog;
+    Button button;
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    switch (id) {
+      case CLOSE_EXISTING:
+        builder.setTitle("Stop Current Application?");
+        builder.setMessage("There is an application already running. You cannot run two applications at once. Would you like to stop the current application?");
+        builder.setPositiveButton( "Stop Current", new DialogButtonClickHandler() );
+        builder.setNegativeButton( "Don't Stop", new DialogButtonClickHandler());
+        dialog = builder.create();
+        break;
+      case MULTI_APP_DISABLED:
+        builder.setTitle("Multi-App Disabled on Robot");
+        builder.setMessage("The mode for running multiple apps is disabled on the robot. If you would like to enable it then you can change the arguments that the App Manager gets in its launch file.");
+        builder.setNeutralButton( "Okay", new DialogButtonClickHandler());
+        dialog = builder.create();        
+        break;
+      default:
+        dialog = null;
+
+    }
+    return dialog;
+  }
+
+
+  public class DialogButtonClickHandler implements DialogInterface.OnClickListener {
+    public void onClick( DialogInterface dialog, int clicked ) {
+      switch( clicked ) {
+        case DialogInterface.BUTTON_POSITIVE:
+          removeDialog(CLOSE_EXISTING);
+          for (int i = 0; i < runningAppsCache.size(); i++) {
+            stopApplication(runningAppsCache.get(i));
+          }
+          break;
+        case DialogInterface.BUTTON_NEGATIVE:
+          removeDialog(CLOSE_EXISTING);
+          break;
+        case DialogInterface.BUTTON_NEUTRAL:
+          removeDialog(MULTI_APP_DISABLED);
+          break;
+      }
+    }
+  }
+
 }
