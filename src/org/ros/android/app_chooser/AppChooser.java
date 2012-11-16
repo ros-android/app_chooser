@@ -47,10 +47,10 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Button;
 import org.ros.message.MessageListener;
+import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.exception.RosException;
-import org.ros.message.app_manager.App;
-import org.ros.message.app_manager.AppList;
+
 import ros.android.activity.RosAppActivity;
 import android.widget.LinearLayout;
 import android.app.AlertDialog;
@@ -58,14 +58,18 @@ import android.content.DialogInterface;
 import org.ros.exception.RemoteException;
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.parameter.ParameterTree;
-import org.ros.message.app_manager.StatusCodes;
-import org.ros.service.app_manager.ListApps;
-import org.ros.service.app_manager.StopApp;
-import org.ros.service.app_manager.StartApp;
+
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import app_manager.App;
+import app_manager.AppList;
+import app_manager.ListApps;
+import app_manager.ListAppsResponse;
+import app_manager.StartAppResponse;
+import app_manager.StatusCodes;
+import app_manager.StopAppResponse;
 import ros.android.activity.AppManager;
 
 import java.util.ArrayList;
@@ -77,7 +81,7 @@ import java.util.List;
  */
 public class AppChooser extends RosAppActivity implements AppManager.TerminationCallback {
 
-  private ArrayList<App> availableAppsCache;
+  private ArrayList<app_manager.App> availableAppsCache;
   private ArrayList<App> runningAppsCache;
   private long availableAppsCacheTime;
   private TextView robotNameView;
@@ -154,7 +158,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
     }
     boolean running = false;
     for (App i : runningAppsCache) {
-      if (i.name.equals(app.name)) {
+      if (i.getName().equals(app.getName())) {
         running = true;
       }
     }
@@ -167,15 +171,15 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
           public void run() {
             stopProgress();
             progress = ProgressDialog.show(AppChooser.this,
-                          "Starting Application", "Starting " + app.display_name + "...", true, false);
+                          "Starting Application", "Starting " + app.getDisplayName() + "...", true, false);
             progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
           }});
-      appManager.startApp(app.name, new ServiceResponseListener<StartApp.Response>() {
+      appManager.startApp(app.getName(), new ServiceResponseListener<StartAppResponse>() {
           @Override
-          public void onSuccess(StartApp.Response message) {
-            if (message.started) {
+          public void onSuccess(StartAppResponse message) {
+            if (message.getStarted()) {
               safeSetStatus("Started");
-            } else if (message.error_code == StatusCodes.MULTIAPP_NOT_SUPPORTED) {
+            } else if (message.getErrorCode() == StatusCodes.MULTIAPP_NOT_SUPPORTED) {
               runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -183,7 +187,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
                 }});
 
             } else {
-              safeSetStatus(message.message);
+              safeSetStatus(message.getMessage());
             }
             stopProgress();
           }
@@ -224,27 +228,27 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
   }
 
   private void forceUpdate() {
-    appManager.listApps(new ServiceResponseListener<ListApps.Response>() {
+    appManager.listApps(new ServiceResponseListener<ListAppsResponse>() {
         @Override
-        public void onSuccess(ListApps.Response message) {
-          availableAppsCache = message.available_apps;
-          runningAppsCache = message.running_apps;
+        public void onSuccess(ListAppsResponse message) {
+          availableAppsCache = (ArrayList<App>) message.getAvailableApps();
+          runningAppsCache = (ArrayList<App>) message.getRunningApps();
           ArrayList<String> runningAppsNames = new ArrayList<String>();
           int i = 0;
           for (i = 0; i<availableAppsCache.size(); i++) {
             App item = availableAppsCache.get(i);
             ArrayList<String> clients = new ArrayList<String>();
-            for (int j = 0; j< item.client_apps.size(); j++) {
-              clients.add(item.client_apps.get(j).client_type);
+            for (int j = 0; j< item.getClientApps().size(); j++) {
+              clients.add(item.getClientApps().get(j).getClientType());
             }
-            if (!clients.contains("android") && item.client_apps.size() != 0) {
+            if (!clients.contains("android") && item.getClientApps().size() != 0) {
               availableAppsCache.remove(i);
               i--;
             }
             
-            if (item.client_apps.size() == 0) {
-              Log.i("AppChooser", "Item name: " + item.name );
-              runningAppsNames.add(item.name);
+            if (item.getClientApps().size() == 0) {
+              Log.i("AppChooser", "Item name: " + item.getName() );
+              runningAppsNames.add(item.getName());
             }
           }
           Log.i("RosAndroid", "ListApps.Response: " + availableAppsCache.size() + " apps");
@@ -296,7 +300,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
         boolean running = false;
         App app = availableAppsCache.get(position);
         for (App i : runningAppsCache) {
-          if (i.name.equals(app.name)) {
+          if (i.getName().equals(app.getName())) {
             running = true;
           }
         }
@@ -321,7 +325,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
   }
 
   @Override
-  protected void onNodeCreate(Node node) {
+  protected void onNodeCreate(ConnectedNode node) {
     availableAppsCache = new ArrayList<App>();
     runningAppsCache = new ArrayList<App>();
     runOnUiThread(new Runnable() {
@@ -369,25 +373,25 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
       appManager.addAppListCallback(new MessageListener<AppList>() {
         @Override
         public void onNewMessage(AppList message) {
-          availableAppsCache = message.available_apps;
-          runningAppsCache = message.running_apps;
+          availableAppsCache = (ArrayList<App>) message.getAvailableApps();
+          runningAppsCache = (ArrayList<App>) message.getRunningApps();
           ArrayList<String> runningAppsNames = new ArrayList<String>();
           int i = 0;
           for (i = 0; i<availableAppsCache.size(); i++) {
             App item = availableAppsCache.get(i);
             ArrayList<String> clients = new ArrayList<String>();
-            for (int j = 0; j< item.client_apps.size(); j++) {
+            for (int j = 0; j< item.getClientApps().size(); j++) {
  
-              clients.add(item.client_apps.get(j).client_type);
+              clients.add(item.getClientApps().get(j).getClientType());
             }
 
-            if (!clients.contains("android") && item.client_apps.size() != 0) {
+            if (!clients.contains("android") && item.getClientApps().size() != 0) {
               availableAppsCache.remove(i);
             }
 
-              if (item.client_apps.size() == 0) {
-              Log.i("AppChooser", "Item name: " + item.name );
-              runningAppsNames.add(item.name);
+              if (item.getClientApps().size() == 0) {
+              Log.i("AppChooser", "Item name: " + item.getName() );
+              runningAppsNames.add(item.getName());
             }
 
           }
@@ -407,7 +411,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
       e.printStackTrace();
     }
 
-    ParameterTree tree = node.newParameterTree();
+    ParameterTree tree = node.getParameterTree();
     if (tree.has("robot/exchange_url")) {
       runOnUiThread(new Runnable() {
           @Override
@@ -484,11 +488,11 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
     progress = ProgressDialog.show(activity,
                "Stopping Applications", "Stopping all applications...", true, false);
     progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-    appManager.stopApp("*", new ServiceResponseListener<StopApp.Response>() {
+    appManager.stopApp("*", new ServiceResponseListener<StopAppResponse>() {
       @Override
-      public void onSuccess(StopApp.Response message) {
-        if (!(message.stopped || message.error_code == StatusCodes.NOT_RUNNING)) {
-          final String errorMessage = message.message;
+      public void onSuccess(StopAppResponse message) {
+        if (!(message.getStopped() || message.getErrorCode() == StatusCodes.NOT_RUNNING)) {
+          final String errorMessage = message.getMessage();
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
@@ -548,11 +552,11 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
       progress = ProgressDialog.show(activity,
                "Stopping Application", "Stopping application...", true, false);
       progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-      appManager.stopApp(app.name, new ServiceResponseListener<StopApp.Response>() {
+      appManager.stopApp(app.getName(), new ServiceResponseListener<StopAppResponse>() {
         @Override
-        public void onSuccess(StopApp.Response message) {
-          if (!(message.stopped || message.error_code == StatusCodes.NOT_RUNNING)) {
-            final String errorMessage = message.message;
+        public void onSuccess(StopAppResponse message) {
+          if (!(message.getStopped() || message.getErrorCode() == StatusCodes.NOT_RUNNING)) {
+            final String errorMessage = message.getMessage();
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -636,7 +640,7 @@ public class AppChooser extends RosAppActivity implements AppManager.Termination
   public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
     if (v.getId()==R.id.gridview) {
       AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-      menu.setHeaderTitle(availableAppsCache.get(info.position).display_name);
+      menu.setHeaderTitle(availableAppsCache.get(info.position).getDisplayName());
       String[] menuItems = getResources().getStringArray(R.array.app_chooser_context_menu);
       for (int i = 0; i<menuItems.length; i++) {
         menu.add(Menu.NONE, i, i, menuItems[i]);

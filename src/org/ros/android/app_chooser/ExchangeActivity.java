@@ -38,6 +38,8 @@ import ros.android.activity.RosAppActivity;
 import ros.android.activity.AppManager;
 import android.widget.LinearLayout;
 import android.os.Bundle;
+
+import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.exception.RosException;
 import android.content.Intent;
@@ -62,12 +64,17 @@ import android.util.Log;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import java.util.ArrayList;
-import org.ros.message.app_manager.AppInstallationState;
-import org.ros.message.app_manager.ExchangeApp;
-import org.ros.service.app_manager.GetAppDetails;
-import org.ros.service.app_manager.GetInstallationState;
-import org.ros.service.app_manager.InstallApp;
-import org.ros.service.app_manager.UninstallApp;
+import app_manager.AppInstallationState;
+import app_manager.ExchangeApp;
+import app_manager.GetAppDetails;
+import app_manager.GetAppDetailsResponse;
+import app_manager.GetInstallationState;
+import app_manager.GetInstallationStateResponse;
+import app_manager.InstallApp;
+import app_manager.InstallAppResponse;
+import app_manager.UninstallApp;
+import app_manager.UninstallAppResponse;
+
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.message.MessageListener;
 import android.app.AlertDialog;
@@ -150,7 +157,7 @@ public class ExchangeActivity extends RosAppActivity {
 
   private static boolean appInList(ArrayList<ExchangeApp> list, String name) {
     for (ExchangeApp a : list) {
-      if (a.name == name) {
+      if (a.getName() == name) {
         return true;
       }
     }
@@ -160,11 +167,11 @@ public class ExchangeActivity extends RosAppActivity {
   public void installApp(View view) {
     final ExchangeActivity activity = this;
     showDialog(INSTALL_DIALOG);
-    appManager.installApp(appSelected, new ServiceResponseListener<InstallApp.Response>() {
+    appManager.installApp(appSelected, new ServiceResponseListener<InstallAppResponse>() {
       @Override
-      public void onSuccess(InstallApp.Response message) {
-        if (!message.installed) {
-          final String errorMessage = message.message;
+      public void onSuccess(InstallAppResponse message) {
+        if (!message.getInstalled() ) {
+          final String errorMessage = message.getMessage();
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
@@ -208,11 +215,11 @@ public class ExchangeActivity extends RosAppActivity {
     final ProgressDialog progress = ProgressDialog.show(activity,
                "Uninstalling App", "Uninstalling " + appSelectedDisplay + "...", true, false);
     progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-    appManager.uninstallApp(appSelected, new ServiceResponseListener<UninstallApp.Response>() {
+    appManager.uninstallApp(appSelected, new ServiceResponseListener<UninstallAppResponse>() {
       @Override
-      public void onSuccess(UninstallApp.Response message) {
-        if (!message.uninstalled) {
-          final String errorMessage = message.message;
+      public void onSuccess(UninstallAppResponse message) {
+        if (!message.getUninstalled()) {
+          final String errorMessage = message.getMessage();
           runOnUiThread(new Runnable() {
               @Override
               public void run() {
@@ -297,10 +304,10 @@ public class ExchangeActivity extends RosAppActivity {
     if (man == null) {
       return;
     }
-    man.getAppDetails(appSelected, new ServiceResponseListener<GetAppDetails.Response>() {
+    man.getAppDetails(appSelected, new ServiceResponseListener<GetAppDetailsResponse>() {
         @Override
-        public void onSuccess(GetAppDetails.Response message) {
-          final ExchangeApp app = message.app;
+        public void onSuccess(GetAppDetailsResponse message) {
+          final ExchangeApp app = message.getApp();
           if (app == null) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -316,9 +323,9 @@ public class ExchangeActivity extends RosAppActivity {
             return;
           }
           Bitmap bitmap = null;
-          if( app.icon.data.length > 0 && app.icon.format != null &&
-              (app.icon.format.equals("jpeg") || app.icon.format.equals("png")) ) {
-            bitmap = BitmapFactory.decodeByteArray( app.icon.data, 0, app.icon.data.length );
+          if( app.getIcon().getData().array().length > 0 && app.getIcon().getFormat() != null &&
+              (app.getIcon().getFormat().equals("jpeg") || app.getIcon().getFormat().equals("png")) ) {
+            bitmap = BitmapFactory.decodeByteArray( app.getIcon().getData().array(), 0, app.getIcon().getData().array().length );
           }
           final Bitmap iconBitmap = bitmap;
           Log.i("RosAndroid", "GetInstallationState.Response: " + availableAppsCache.size() + " apps");
@@ -331,7 +338,7 @@ public class ExchangeActivity extends RosAppActivity {
                 } else {
                   iv.setImageResource(R.drawable.icon);
                 }
-                exchangeAppDetailTextView.setText(app.description.toString());
+                exchangeAppDetailTextView.setText(app.getDescription().toString());
                 update(availableAppsCache, installedAppsCache);
               }});
         }
@@ -358,19 +365,19 @@ public class ExchangeActivity extends RosAppActivity {
 
     int i = 0;
     for (ExchangeApp a : installedApps) {
-      if (!a.hidden) {
+      if (!a.getHidden()) {
         nInstalledApps++;
       }
     }
     installed_application_list = new String[nInstalledApps];
     installed_application_display = new String[nInstalledApps];
     for (ExchangeApp a : installedApps) {
-      if (!a.hidden) {
-        installed_application_list[i] =  a.name;
-        if (!a.version.equals(a.latest_version)) {
-          installed_application_display[i] = a.display_name + " (Upgradable)";
+      if (!a.getHidden()) {
+        installed_application_list[i] =  a.getName();
+        if (!a.getVersion().equals(a.getLatestVersion())) {
+          installed_application_display[i] = a.getDisplayName() + " (Upgradable)";
         } else {
-          installed_application_display[i] = a.display_name;
+          installed_application_display[i] = a.getDisplayName();
         }
         i = i + 1;
       }
@@ -406,16 +413,16 @@ public class ExchangeActivity extends RosAppActivity {
     ////
     i = 0;
     for (ExchangeApp a : availableApps) {
-      if (!a.hidden) {
+      if (!a.getHidden()) {
         nAvailableApps++;
       }
     }
     available_application_list = new String[nAvailableApps];
     available_application_display = new String[nAvailableApps];
     for (ExchangeApp a : availableApps) {
-      if (!a.hidden) {
-        available_application_list[i] =  a.name;
-        available_application_display[i] = a.display_name;
+      if (!a.getHidden()) {
+        available_application_list[i] =  a.getName();
+        available_application_display[i] = a.getDisplayName();
         i = i + 1;
       }
     }
@@ -453,8 +460,8 @@ public class ExchangeActivity extends RosAppActivity {
       exchangeAppNameView.setText(appSelectedDisplay + " (Installed)");
       installAppButton.setVisibility(appExchangeView.GONE);
       for (ExchangeApp a : installedApps) {
-        if (a.name == appSelected && !a.version.equals(a.latest_version)) {
-          exchangeAppNameView.setText(a.display_name + " (Installed, Upgrade Available)");
+        if (a.getName() == appSelected && !a.getVersion().equals(a.getLatestVersion())) {
+          exchangeAppNameView.setText(a.getDisplayName() + " (Installed, Upgrade Available)");
           installAppButton.setVisibility(appExchangeView.VISIBLE);
         }
       }
@@ -482,11 +489,11 @@ public class ExchangeActivity extends RosAppActivity {
   }
 
   private void runUpdate(boolean remoteUpdate) {
-    appManager.listExchangeApps(remoteUpdate, new ServiceResponseListener<GetInstallationState.Response>() {
+    appManager.listExchangeApps(remoteUpdate, new ServiceResponseListener<GetInstallationStateResponse>() {
         @Override
-        public void onSuccess(GetInstallationState.Response message) {
-          availableAppsCache = message.available_apps;
-          installedAppsCache = message.installed_apps;
+        public void onSuccess(GetInstallationStateResponse message) {
+          availableAppsCache = (ArrayList<ExchangeApp>) message.getAvailableApps();
+          installedAppsCache = (ArrayList<ExchangeApp>) message.getInstalledApps();
           Log.i("RosAndroid", "GetInstallationState.Response: " + availableAppsCache.size() + " apps");
           runOnUiThread(new Runnable() {
               @Override
@@ -515,7 +522,7 @@ public class ExchangeActivity extends RosAppActivity {
   }
 
   @Override
-  protected void onNodeCreate(Node node) {
+  protected void onNodeCreate(ConnectedNode node) {
     Log.i("RosAndroid", "ExchangeActivity.onNodeCreate");
     try {
       super.onNodeCreate(node);
@@ -538,8 +545,8 @@ public class ExchangeActivity extends RosAppActivity {
       appManager.addExchangeListCallback(new MessageListener<AppInstallationState>() {
           @Override
           public void onNewMessage(AppInstallationState message) {
-            availableAppsCache = message.available_apps;
-            installedAppsCache = message.installed_apps;
+            availableAppsCache = (ArrayList<ExchangeApp>) message.getAvailableApps();
+            installedAppsCache = (ArrayList<ExchangeApp>) message.getInstalledApps();
             Log.i("RosAndroid", "GetInstallationState.Response: " + availableAppsCache.size() + " apps");
             runOnUiThread(new Runnable() {
                 @Override
@@ -554,14 +561,14 @@ public class ExchangeActivity extends RosAppActivity {
       e.printStackTrace();
     }
     Subscriber client_sub = node.newSubscriber("install_status","std_msgs/String");
-    client_sub.addMessageListener(new MessageListener<org.ros.message.std_msgs.String>() {
+    client_sub.addMessageListener(new MessageListener<std_msgs.String>() {
             @Override
-            public void onNewMessage(final org.ros.message.std_msgs.String data) {
+            public void onNewMessage(final std_msgs.String data) {
               runOnUiThread(new Runnable() {
               @Override
               public void run() {
                 String newline = System.getProperty("line.separator");
-                addTextToTextView(newline+data.data);  
+                addTextToTextView(newline+data.getData());  
               }      
             });
           }   

@@ -38,8 +38,8 @@ import android.content.Intent;
 import java.util.HashMap;
 import java.util.List;
 
-import org.ros.message.app_manager.ClientApp;
-import org.ros.message.app_manager.KeyValue;
+import app_manager.ClientApp;
+import app_manager.KeyValue;
 
 /**
  * Convenience class which populates HashMaps with manager_data and app_data
@@ -47,11 +47,11 @@ import org.ros.message.app_manager.KeyValue;
  */
 public class ClientAppData {
   public HashMap<String, String> managerData;
-  public List<KeyValue> appData;
+  public List<app_manager.KeyValue> appData;
 
-  public ClientAppData(ClientApp clientApp) {
-    managerData = keyValueListToMap(clientApp.manager_data);
-    appData = clientApp.app_data;
+  public ClientAppData(app_manager.ClientApp clientApp) {
+    managerData = keyValueListToMap(clientApp.getManagerData());
+    appData = clientApp.getAppData();
   }
 
   public Intent createIntent() {
@@ -72,7 +72,7 @@ public class ClientAppData {
     // Copy all app data to "extra" data in the intent.
     for (int i = 0; i < appData.size(); i++) {
       KeyValue kv = appData.get(i);
-      intent.putExtra(kv.key, kv.value);
+      intent.putExtra(kv.getKey(), kv.getValue());
     }
 
     return intent;
@@ -82,7 +82,7 @@ public class ClientAppData {
     HashMap<String, String> map = new HashMap<String, String>();
     for (int i = 0; i < kvl.size(); i++) {
       KeyValue kv = kvl.get(i);
-      map.put(kv.key, kv.value);
+      map.put(kv.getKey(), kv.getValue());
     }
     return map;
   }
