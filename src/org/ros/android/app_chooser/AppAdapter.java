@@ -42,7 +42,7 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.LayoutInflater;
-import org.ros.message.app_manager.App;
+import app_manager.App;
 import java.util.ArrayList;
 
 public class AppAdapter extends BaseAdapter {
@@ -75,11 +75,11 @@ public class AppAdapter extends BaseAdapter {
   }
 
   boolean isAppRunning(App app) {
-    if (app.name == null) {
+    if (app.getName() == null) {
       return false;
     }
     for (App c : this.runningApps) {
-      if (app.name.equals(c.name)) {
+      if (app.getName().equals(c.getName())) {
         return true;
       }
     }
@@ -96,16 +96,16 @@ public class AppAdapter extends BaseAdapter {
     // up sometimes, so I'm always making new ones. (hersh: am I really sure of this??)
     View view = inflater.inflate(R.layout.app_item, null);
     App app = apps.get(position);
-    if( app.icon.data.length > 0 && app.icon.format != null &&
-        (app.icon.format.equals("jpeg") || app.icon.format.equals("png")) ) {
-      Bitmap iconBitmap = BitmapFactory.decodeByteArray( app.icon.data, 0, app.icon.data.length );
+    if( app.getIcon().getData().array().length > 0 && app.getIcon().getFormat() != null &&
+        (app.getIcon().getFormat().equals("jpeg") || app.getIcon().getFormat().equals("png")) ) {
+      Bitmap iconBitmap = BitmapFactory.decodeByteArray( app.getIcon().getData().array(), 0, app.getIcon().getData().array().length );
       if( iconBitmap != null ) {
         ImageView iv = (ImageView) view.findViewById(R.id.icon);
         iv.setImageBitmap(iconBitmap);
       }
     }
     TextView tv = (TextView) view.findViewById(R.id.name);
-    tv.setText(app.display_name);
+    tv.setText(app.getDisplayName());
     if (isAppRunning(app)) {
       view.setBackgroundResource(R.drawable.highlight);
     } else {

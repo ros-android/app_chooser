@@ -39,10 +39,10 @@ import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.util.Log;
-import org.ros.message.app_manager.App;
-import org.ros.message.app_manager.ClientApp;
+
 import ros.android.activity.AppManager;
 import android.net.Uri;
+import app_manager.ClientApp;
 
 import java.util.ArrayList;
 
@@ -50,35 +50,37 @@ public class AppLauncher {
   static private final String CLIENT_TYPE = "android";
 
   /** Launch a client app for the given robot app. */
-  static public void launch(final Activity parentActivity, App app) {
+  static public void launch(final Activity parentActivity, app_manager.App app) {
     ArrayList<ClientAppData> android_apps = new ArrayList<ClientAppData>();
 
     if (parentActivity instanceof AppChooser) {
-      ((AppChooser)parentActivity).onAppClicked(app, app.client_apps.size() > 0);
+      ((AppChooser)parentActivity).onAppClicked(app, app.getClientApps().size() > 0);
     } else {
       Log.i("RosAndroid", "Could not launch becase parent is not an appchooser");
-      if (app.client_apps.size() == 0) {
+      if (app.getClientApps().size() == 0) {
         Log.e("RosAndroid", "Not launching application!!!");
         return;
       }
     }
 
-    if (app.client_apps.size() == 0) {
+    if (app.getClientApps().size() == 0) {
       return;
     }
 
-    Log.i("RosAndroid", "launching robot app " + app.name + ".  Found " + app.client_apps.size()
+    Log.i("RosAndroid", "launching robot app " + app.getName() + ".  Found " + app.getClientApps().size()
         + " client apps.");
 
     // Loop over all possible client apps to find the android ones.
-    for (int i = 0; i < app.client_apps.size(); i++) {
-      ClientApp client_app = app.client_apps.get(i);
-      if (client_app.client_type != null && client_app.client_type.equals(CLIENT_TYPE)) {
-        android_apps.add(new ClientAppData(client_app));
+    for (int i = 0; i < app.getClientApps().size(); i++) {
+      ClientApp client_app = app.getClientApps().get(i);
+      if (client_app.getClientType() != null && client_app.getClientType().equals(CLIENT_TYPE)) {
+        //android_apps.add(new ClientAppData(client_app));
+    	  ClientAppData data =  new ClientAppData(client_app);
+    	 android_apps.add(data);
       }
     }
 
-    Log.i("RosAndroid", "launching robot app " + app.name + ".  Found " + android_apps.size()
+    Log.i("RosAndroid", "launching robot app " + app.getName() + ".  Found " + android_apps.size()
         + " android apps.");
 
     // TODO: filter out android apps which are not appropriate for
@@ -108,7 +110,7 @@ public class AppLauncher {
     for (int i = 0; i < appropriateAndroidApps.size(); i++) {
       ClientAppData appData = appropriateAndroidApps.get(i);
       Intent intent = appData.createIntent();
-      intent.putExtra(AppManager.PACKAGE + ".robot_app_name", app.name);
+      intent.putExtra(AppManager.PACKAGE + ".robot_app_name", app.getName());
       try {
         className = intent.getAction();
         Log.i("RosAndroid", "trying to startActivity( action: " + intent.getAction() + " )");
