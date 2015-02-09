@@ -40,7 +40,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.util.Log;
 
-import ros.android.activity.AppManager;
+import org.ros.android.activity.AppManager;
 import android.net.Uri;
 import app_manager.ClientApp;
 
