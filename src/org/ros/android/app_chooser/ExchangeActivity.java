@@ -34,8 +34,8 @@
 package org.ros.android.app_chooser;
 
 import org.ros.node.topic.Subscriber;
-import ros.android.activity.RosAppActivity;
-import ros.android.activity.AppManager;
+import org.ros.android.activity.RosAppActivity;
+import org.ros.android.activity.AppManager;
 import android.widget.LinearLayout;
 import android.os.Bundle;
 

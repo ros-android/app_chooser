@@ -51,7 +51,7 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.exception.RosException;
 
-import ros.android.activity.RosAppActivity;
+import org.ros.android.activity.RosAppActivity;
 import android.widget.LinearLayout;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -70,7 +70,7 @@ import app_manager.ListAppsResponse;
 import app_manager.StartAppResponse;
 import app_manager.StatusCodes;
 import app_manager.StopAppResponse;
-import ros.android.activity.AppManager;
+import org.ros.android.activity.AppManager;
 
 import java.util.ArrayList;
 import java.util.List;
